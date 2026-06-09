@@ -17,6 +17,20 @@
           "path" : "/Users/scech/Documents/GitHub/RugbyStats/rugby_stats/ios/Flutter/ephemeral/Packages/.packages/FlutterFramework"
         },
         "subpath" : "flutterframework"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "sqflite_darwin-2.4.3",
+          "kind" : "fileSystem",
+          "location" : "/Users/scech/Documents/GitHub/RugbyStats/rugby_stats/ios/Flutter/ephemeral/Packages/.packages/sqflite_darwin-2.4.3",
+          "name" : "sqflite_darwin"
+        },
+        "state" : {
+          "name" : "fileSystem",
+          "path" : "/Users/scech/Documents/GitHub/RugbyStats/rugby_stats/ios/Flutter/ephemeral/Packages/.packages/sqflite_darwin-2.4.3"
+        },
+        "subpath" : "sqflite_darwin-2.4.3"
       }
     ],
     "prebuilts" : [
