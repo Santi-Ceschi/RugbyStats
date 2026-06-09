@@ -9,12 +9,12 @@
         "packageRef" : {
           "identity" : "flutterframework",
           "kind" : "fileSystem",
-          "location" : "/Users/scech/Documents/GitHub/RugbyStats/rugby_stats/ios/Flutter/ephemeral/Packages/.packages/FlutterFramework",
+          "location" : "/Users/fedegarcia/Desktop/RugbyStats/rugby_stats/ios/Flutter/ephemeral/Packages/.packages/FlutterFramework",
           "name" : "FlutterFramework"
         },
         "state" : {
           "name" : "fileSystem",
-          "path" : "/Users/scech/Documents/GitHub/RugbyStats/rugby_stats/ios/Flutter/ephemeral/Packages/.packages/FlutterFramework"
+          "path" : "/Users/fedegarcia/Desktop/RugbyStats/rugby_stats/ios/Flutter/ephemeral/Packages/.packages/FlutterFramework"
         },
         "subpath" : "flutterframework"
       }
