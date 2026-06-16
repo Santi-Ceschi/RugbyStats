@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,7 +23,6 @@ class _LoginPageState extends State<LoginPage> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      // Aquí se manejará la lógica de autenticación más adelante.
       final username = _usernameController.text;
       
       ScaffoldMessenger.of(context).showSnackBar(
@@ -263,7 +263,16 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-                        
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const RegisterPage()),
+                            );
+                          },
+                          child: const Text('¿No tenés cuenta? Registrate aquí'),
+                        ),
                         const Spacer(),
                         
                         // PIE DE PÁGINA: VERSIÓN
