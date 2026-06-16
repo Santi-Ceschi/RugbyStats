@@ -33,7 +33,7 @@
     },
     {
       "name": "crypto",
-      "rootUri": "file:///Users/scech/.pub-cache/hosted/pub.dev/crypto-3.0.7",
+      "rootUri": "file:///Users/fedegarcia/.pub-cache/hosted/pub.dev/crypto-3.0.7",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -213,7 +213,7 @@
     },
     {
       "name": "typed_data",
-      "rootUri": "file:///Users/scech/.pub-cache/hosted/pub.dev/typed_data-1.4.0",
+      "rootUri": "file:///Users/fedegarcia/.pub-cache/hosted/pub.dev/typed_data-1.4.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
