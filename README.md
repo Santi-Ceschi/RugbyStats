@@ -8,7 +8,7 @@ Digitaliza estadísticas de rugby en tiempo real (offline-first) para Club Alma 
 - macOS (última versión recomendada)
 - Homebrew
 - Flutter SDK (recomendado channel stable)
-  - Recomendado: Flutter >= 3.7.0 (ajusta si necesitás otra versión)
+- Recomendado: Flutter >= 3.7.0 (ajusta si necesitás otra versión)
 - Dart (incluido con Flutter SDK)
 - Android Studio (solo para AVD o CLI tools)
 - Xcode (para simulador iOS)
