@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2b14abc660759390a88d4ea59f26a11895623d7f
 import 'package:flutter/material.dart';
 
 enum Categoria { preIntermedia, intermedia, primera }
@@ -44,7 +47,10 @@ class Partido {
     }
   }
 }
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 2b14abc660759390a88d4ea59f26a11895623d7f
 class Partido {
   final int? id;
   final String fecha;
@@ -81,4 +87,7 @@ class Partido {
     };
   }
 }
+<<<<<<< HEAD
 >>>>>>> main
+=======
+>>>>>>> 2b14abc660759390a88d4ea59f26a11895623d7f
