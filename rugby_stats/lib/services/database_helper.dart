@@ -43,8 +43,8 @@ class DatabaseHelper {
     final db = await instance.database;
     return await db.insert('PARTIDO', partido.toMap());
   }
-
-    Future<int> insertAccion(Accion accion) async {
+      // Método para insertar una acción
+  Future<int> insertAccion(Accion accion) async {
     final db = await instance.database;
     return await db.insert('Accion', accion.toMap());
   }
