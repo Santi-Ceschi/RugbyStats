@@ -10,6 +10,7 @@
         "crypto",
         "cupertino_icons",
         "flutter",
+        "intl",
         "path",
         "sqflite"
       ],
@@ -44,16 +45,22 @@
       ]
     },
     {
+      "name": "cupertino_icons",
+      "version": "1.0.9",
+      "dependencies": []
+    },
+    {
+      "name": "intl",
+      "version": "0.19.0",
+      "dependencies": [
+        "clock",
+        "meta",
+        "path"
       "name": "crypto",
       "version": "3.0.7",
       "dependencies": [
         "typed_data"
       ]
-    },
-    {
-      "name": "cupertino_icons",
-      "version": "1.0.9",
-      "dependencies": []
     },
     {
       "name": "path",
