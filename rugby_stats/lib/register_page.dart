@@ -30,10 +30,14 @@ class _RegisterPageState extends State<RegisterPage> {
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Registrando usuario...'),
+          content: Text('Usuario registrado con éxito'),
           backgroundColor: Colors.black,
         ),
       );
+      // Navigate back to login
+      Future.delayed(const Duration(seconds: 2), () {
+        Navigator.pop(context);
+      });
     }
   }
 

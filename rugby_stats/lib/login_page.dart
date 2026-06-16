@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
+import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,13 +24,9 @@ class _LoginPageState extends State<LoginPage> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      final username = _usernameController.text;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Iniciando sesión como: $username...'),
-          backgroundColor: Colors.black,
-        ),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     }
   }
@@ -57,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
                         
                         // LOGOTIPO
                         Image.asset(
-                          'assets/images/logo.png',
+                          'assets/images/logo.JPG',
                           height: 180,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
