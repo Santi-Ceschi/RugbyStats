@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
-import 'home_page.dart';
-
+    
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -24,9 +23,13 @@ class _LoginPageState extends State<LoginPage> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+      final username = _usernameController.text;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Iniciando sesión como: $username...'),
+          backgroundColor: Colors.black,
+        ),
       );
     }
   }
@@ -54,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
                         
                         // LOGOTIPO
                         Image.asset(
-                          'assets/images/logo.JPG',
+                          'assets/images/logo.png',
                           height: 180,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
@@ -260,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        // En tu columna principal de LoginPage, añade esto donde quieras el botón:
                         TextButton(
                           onPressed: () {
                             Navigator.push(
@@ -269,7 +272,7 @@ class _LoginPageState extends State<LoginPage> {
                             );
                           },
                           child: const Text('¿No tenés cuenta? Registrate aquí'),
-                        ),
+                          ),
                         const Spacer(),
                         
                         // PIE DE PÁGINA: VERSIÓN

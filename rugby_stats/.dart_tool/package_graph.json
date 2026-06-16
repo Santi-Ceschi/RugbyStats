@@ -45,9 +45,6 @@
       ]
     },
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
       "name": "crypto",
       "version": "3.0.7",
       "dependencies": [
@@ -55,9 +52,6 @@
       ]
     },
     {
->>>>>>> main
-=======
->>>>>>> 2b14abc660759390a88d4ea59f26a11895623d7f
       "name": "cupertino_icons",
       "version": "1.0.9",
       "dependencies": []
@@ -69,10 +63,6 @@
         "clock",
         "meta",
         "path"
-      "name": "crypto",
-      "version": "3.0.7",
-      "dependencies": [
-        "typed_data"
       ]
     },
     {
