@@ -3,6 +3,8 @@ import 'package:path/path.dart';
 import '../models/usuario.dart'; // Importa tu modelo para poder usarlo aquí
 import '../models/partido.dart';
 import '../models/accion.dart'; 
+import '../models/tipo_accion.dart';
+import '../models/reporte.dart'; 
 import 'dart:convert'; // Necesario para utf8
 import 'package:crypto/crypto.dart'; 
 
@@ -47,6 +49,17 @@ class DatabaseHelper {
   Future<int> insertAccion(Accion accion) async {
     final db = await instance.database;
     return await db.insert('Accion', accion.toMap());
+  }
+    // Métodos para Tipo_Accion
+  Future<int> insertTipoAccion(TipoAccion tipoAccion) async {
+    final db = await instance.database;
+    return await db.insert('Tipo_Accion', tipoAccion.toMap());
+  }
+
+  // Métodos para REPORTE
+  Future<int> insertReporte(Reporte reporte) async {
+    final db = await instance.database;
+    return await db.insert('REPORTE', reporte.toMap());
   }
 }
 
