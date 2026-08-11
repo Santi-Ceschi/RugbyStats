@@ -237,8 +237,8 @@
     }
   ],
   "generator": "pub",
-  "generatorVersion": "3.12.0",
+  "generatorVersion": "3.12.1",
   "flutterRoot": "file:///opt/homebrew/share/flutter",
-  "flutterVersion": "3.44.0",
+  "flutterVersion": "3.44.1",
   "pubCache": "file:///Users/fedegarcia/.pub-cache"
 }
