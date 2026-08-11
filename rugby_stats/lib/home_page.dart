@@ -187,23 +187,30 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 12),
         // Botón que alterna la visibilidad del panel
         // En tu método _buildActionButtons()
-        OutlinedButton(
-          onPressed: () =>
-              setState(() => _isFilterExpanded = !_isFilterExpanded),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.filter_list),
-              Text(
-                _isFilterExpanded
-                    ? ' CERRAR FILTROS '
-                    : ' CONSULTAR MÁS PARTIDOS ',
+        ExpansionTile(
+          title: const Text('Consultar más partidos'),
+          leading: const Icon(Icons.filter_list),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: FilterPanel(
+                dateFromController: _dateFromController,
+                dateToController: _dateToController,
+                selectedDivision: _selectedDivision,
+                divisions: _divisions,
+                onDivisionChanged: (val) =>
+                    setState(() => _selectedDivision = val),
+                onApply: () {
+                  /* Tu lógica de aplicación aquí */
+                },
+                onClear: () => setState(() {
+                  _selectedDivision = null;
+                  _dateFromController.clear();
+                  _dateToController.clear();
+                }),
               ),
-              Icon(
-                _isFilterExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         OutlinedButton(
