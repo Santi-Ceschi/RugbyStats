@@ -40,8 +40,8 @@ class PartidoCard extends StatelessWidget {
               children: [
                 Text(partido.categoriaLabel,
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey[600])),
-                Text('vs ${partido.oponente}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(DateFormat('d MMM yyyy').format(partido.fecha),
+                Text('vs ${partido.equipoVisitante}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(DateFormat('d MMM yyyy').format(DateTime.parse(partido.fecha)),
                     style: TextStyle(fontSize: 12, color: Colors.grey[600])),
               ],
             ),
@@ -49,7 +49,7 @@ class PartidoCard extends StatelessWidget {
           // Score
           Column(
             children: [
-              Text('${partido.puntos_local} - ${partido.puntos_visitante}',
+              Text('${partido.puntosLocal} - ${partido.puntosVisitante}',
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               Text(partido.resultado, style: const TextStyle(fontSize: 12, color: Colors.grey)),
             ],

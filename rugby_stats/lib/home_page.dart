@@ -12,9 +12,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // Mock data for now
   final List<Partido> _partidos = [
-    Partido(id: '1', categoria: Categoria.preIntermedia, oponente: 'uni', fecha: DateTime(2026, 6, 15), puntos_local: 60, puntos_visitante: 5, resultado: 'Victoria'),
-    Partido(id: '2', categoria: Categoria.intermedia, oponente: 'uni', fecha: DateTime(2026, 6, 15), puntos_local: 20, puntos_visitante: 10, resultado: 'Victoria'),
-    Partido(id: '3', categoria: Categoria.primera, oponente: 'uni', fecha: DateTime(2026, 6, 15), puntos_local: 46, puntos_visitante: 30, resultado: 'Victoria'),
+    Partido(idPartido: 1, categoria: Categoria.preIntermedia, equipoVisitante: 'uni', equipoLocal: 'rival', estadoPartido: 'Finalizado', fecha: DateTime(2026, 6, 15).toIso8601String(), puntosLocal: 60, puntosVisitante: 5, resultado: 'Victoria',torneo: 'Torneo Local',division: 'Primera'), // Asegúrate de incluir los campos que faltendivision: 'Primera'),
+    Partido(idPartido: 2, categoria: Categoria.intermedia, equipoVisitante: 'uni', equipoLocal: 'rival', estadoPartido: 'Finalizado', fecha: DateTime(2026, 6, 15).toIso8601String(), puntosLocal: 20, puntosVisitante: 10, resultado: 'Victoria', torneo: 'Torneo Local', division: 'Primera'),
+    Partido(idPartido: 3, categoria: Categoria.primera, equipoVisitante: 'uni', equipoLocal: 'rival', estadoPartido: 'Finalizado', fecha: DateTime(2026, 6, 15).toIso8601String(), puntosLocal: 46, puntosVisitante: 30, resultado: 'Victoria', torneo: 'Torneo Local', division: 'Primera'),
   ];
 
   @override

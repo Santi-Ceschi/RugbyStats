@@ -3,30 +3,34 @@ import 'package:flutter/material.dart';
 enum Categoria { preIntermedia, intermedia, primera }
 
 class Partido {
-  final String id;
-  final Categoria categoria;
-  final String oponente;
-  final DateTime fecha;
-  final int puntos_local;
-  final int puntos_visitante;
-  final String resultado; // e.g., "Victoria"
-
-  // Campos adicionales para la base de datos
-  final String? torneo;
-  final String? division;
+  final int? idPartido; // Cambiado a int? para reflejar autoincrement
+  final String fecha; // Guardado como ISO8601 String
+  final String equipoVisitante;
+  final String equipoLocal;
+  final String estadoPartido;
+  final String torneo;
+  final int puntosLocal;
+  final int puntosVisitante;
+  final String division;
   final int? idUsuario;
 
+  // Campos de UI (NO se guardan en la tabla PARTIDO)
+  final Categoria categoria;
+  final String resultado; 
+
   Partido({
-    required this.id,
-    required this.categoria,
-    required this.oponente,
+    this.idPartido,
     required this.fecha,
-    required this.puntos_local,
-    required this.puntos_visitante,
-    required this.resultado,
-    this.torneo,
-    this.division,
+    required this.equipoVisitante,
+    required this.equipoLocal,
+    required this.estadoPartido,
+    required this.torneo,
+    required this.puntosLocal,
+    required this.puntosVisitante,
+    required this.division,
     this.idUsuario,
+    required this.categoria,
+    required this.resultado,
   });
 
   Color get color {
@@ -51,18 +55,18 @@ class Partido {
     }
   }
 
-  Map<String, dynamic> toMap() {
+    Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'categoria': categoria.index,
-      'oponente': oponente,
-      'fecha': fecha.toIso8601String(),
-      'puntos_local': puntos_local,
-      'puntos_visitante': puntos_visitante,
-      'resultado': resultado,
-      'torneo': torneo,
-      'division': division,
-      'idUsuario': idUsuario,
+      'Id_Partido': idPartido,
+      'Fecha': fecha,
+      'Equipo_Visitante': equipoVisitante,
+      'Equipo_local': equipoLocal,
+      'Estado_partido': estadoPartido,
+      'Torneo': torneo,
+      'Puntos_local': puntosLocal,
+      'Puntos_visitante': puntosVisitante,
+      'Division': division,
+      'Id_Usuario': idUsuario,
     };
   }
 }
