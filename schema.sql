@@ -17,7 +17,8 @@ CREATE TABLE PARTIDO (
 	Equipo_local TEXT,
 	Estado_partido TEXT,
 	Torneo TEXT,
-	Puntos INTEGER DEFAULT 0,
+	Puntos_local INTEGER DEFAULT 0,
+    Puntos_visitante INTEGER DEFAULT 0,
 	Division TEXT,
 	Id_Usuario INTEGER REFERENCES Usuario(IdUsuario) ON DELETE SET NULL
 );

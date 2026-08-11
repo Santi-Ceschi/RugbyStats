@@ -7,8 +7,8 @@ class Partido {
   final Categoria categoria;
   final String oponente;
   final DateTime fecha;
-  final int scoreLocal;
-  final int scoreVisitante;
+  final int puntos_local;
+  final int puntos_visitante;
   final String resultado; // e.g., "Victoria"
 
   // Campos adicionales para la base de datos
@@ -21,8 +21,8 @@ class Partido {
     required this.categoria,
     required this.oponente,
     required this.fecha,
-    required this.scoreLocal,
-    required this.scoreVisitante,
+    required this.puntos_local,
+    required this.puntos_visitante,
     required this.resultado,
     this.torneo,
     this.division,
@@ -57,8 +57,8 @@ class Partido {
       'categoria': categoria.index,
       'oponente': oponente,
       'fecha': fecha.toIso8601String(),
-      'scoreLocal': scoreLocal,
-      'scoreVisitante': scoreVisitante,
+      'puntos_local': puntos_local,
+      'puntos_visitante': puntos_visitante,
       'resultado': resultado,
       'torneo': torneo,
       'division': division,

@@ -49,7 +49,7 @@ class PartidoCard extends StatelessWidget {
           // Score
           Column(
             children: [
-              Text('${partido.scoreLocal} - ${partido.scoreVisitante}',
+              Text('${partido.puntos_local} - ${partido.puntos_visitante}',
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               Text(partido.resultado, style: const TextStyle(fontSize: 12, color: Colors.grey)),
             ],

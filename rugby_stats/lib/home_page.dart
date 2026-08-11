@@ -12,9 +12,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // Mock data for now
   final List<Partido> _partidos = [
-    Partido(id: '1', categoria: Categoria.preIntermedia, oponente: 'uni', fecha: DateTime(2026, 6, 15), scoreLocal: 60, scoreVisitante: 5, resultado: 'Victoria'),
-    Partido(id: '2', categoria: Categoria.intermedia, oponente: 'uni', fecha: DateTime(2026, 6, 15), scoreLocal: 20, scoreVisitante: 10, resultado: 'Victoria'),
-    Partido(id: '3', categoria: Categoria.primera, oponente: 'uni', fecha: DateTime(2026, 6, 15), scoreLocal: 46, scoreVisitante: 30, resultado: 'Victoria'),
+    Partido(id: '1', categoria: Categoria.preIntermedia, oponente: 'uni', fecha: DateTime(2026, 6, 15), puntos_local: 60, puntos_visitante: 5, resultado: 'Victoria'),
+    Partido(id: '2', categoria: Categoria.intermedia, oponente: 'uni', fecha: DateTime(2026, 6, 15), puntos_local: 20, puntos_visitante: 10, resultado: 'Victoria'),
+    Partido(id: '3', categoria: Categoria.primera, oponente: 'uni', fecha: DateTime(2026, 6, 15), puntos_local: 46, puntos_visitante: 30, resultado: 'Victoria'),
   ];
 
   @override
