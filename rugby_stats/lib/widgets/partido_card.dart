@@ -26,14 +26,14 @@ class PartidoCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Color stripe
+          // Franja de color
           Container(
             width: 4,
             height: 50,
             color: partido.color,
           ),
           const SizedBox(width: 16),
-          // Info
+          // Información
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +46,7 @@ class PartidoCard extends StatelessWidget {
               ],
             ),
           ),
-          // Score
+          // Marcador
           Column(
             children: [
               Text('${partido.puntosLocal} - ${partido.puntosVisitante}',
@@ -55,7 +55,7 @@ class PartidoCard extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 16),
-          // Actions
+          // Acciones
           IconButton(icon: const Icon(Icons.edit_outlined, size: 20), onPressed: onEdit),
           IconButton(icon: const Icon(Icons.delete_outline, size: 20), onPressed: onDelete),
         ],
