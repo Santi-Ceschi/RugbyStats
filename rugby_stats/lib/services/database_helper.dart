@@ -30,14 +30,23 @@ class DatabaseHelper {
   }
 
   // La función real que hará el INSERT
-  Future<int> insertUsuario(Usuario usuario) async {
+    Future<int> insertUsuario(Usuario usuario) async {
     final db = await instance.database;
-      final bytes = utf8.encode(usuario.contrasena); // 1. Convertimos la contraseña a bytes
-      final digest = sha256.convert(bytes);// 2. Generamos el hash SHA-256
-      Map<String, dynamic> usuarioMap = usuario.toMap();// 3. Creamos un nuevo mapa con la contraseña encriptada (hash)
-      usuarioMap['Contrasena'] = digest.toString(); 
-    // Aquí es donde usamos el toMap() que creamos antes
-    return await db.insert('Usuario', usuario.toMap());
+    
+    // 1. Convertimos la contraseña a bytes
+    final bytes = utf8.encode(usuario.contrasena); 
+    
+    // 2. Generamos el hash SHA-256
+    final digest = sha256.convert(bytes);
+    
+    // 3. Creamos el mapa con la contraseña original
+    Map<String, dynamic> usuarioMap = usuario.toMap();
+    
+    // 4. SOBREESCRIBIMOS el valor de la contraseña con el hash
+    usuarioMap['Contrasena'] = digest.toString(); 
+    
+    // 5. INSERTAMOS usando usuarioMap (que ya tiene el hash)
+    return await db.insert('Usuario', usuarioMap);
   }
 
       // Método para insertar un partido
@@ -45,7 +54,18 @@ class DatabaseHelper {
     final db = await instance.database;
     return await db.insert('PARTIDO', partido.toMap());
   }
-      // Método para insertar una acción
+
+  Future<bool> emailExists(String email) async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> results = await db.query(
+      'Usuario',
+      where: 'Email = ?',
+      whereArgs: [email],
+    );
+    return results.isNotEmpty;
+  }
+
+  // Método para insertar una acción
   Future<int> insertAccion(Accion accion) async {
     final db = await instance.database;
     return await db.insert('Accion', accion.toMap());
@@ -60,6 +80,42 @@ class DatabaseHelper {
   Future<int> insertReporte(Reporte reporte) async {
     final db = await instance.database;
     return await db.insert('REPORTE', reporte.toMap());
+  }
+
+    // Método para el login
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final db = await instance.database;
+    
+    // 1. Buscamos el usuario por email
+    final List<Map<String, dynamic>> results = await db.query(
+      'Usuario',
+      where: 'Email = ?',
+      whereArgs: [email],
+    );
+
+    if (results.isEmpty) {
+      return {'success': false, 'message': 'El Gmail no está registrado'};
+    }
+
+    // 2. Hash de la contraseña ingresada para comparar
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    final hashedInput = digest.toString();
+
+    // 3. Comparar hashes
+    if (results.first['Contrasena'] == hashedInput) {
+      // Retornamos éxito y el usuario
+      final usuario = Usuario(
+        id: results.first['IdUsuario'],
+        nombre: results.first['Nombre_Usuario'],
+        email: results.first['Email'],
+        telefono: results.first['Telefono'],
+        contrasena: results.first['Contrasena'],
+      );
+      return {'success': true, 'user': usuario};
+    } else {
+      return {'success': false, 'message': 'Contraseña incorrecta'};
+    }
   }
 }
 
