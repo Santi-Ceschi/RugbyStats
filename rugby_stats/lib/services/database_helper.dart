@@ -32,24 +32,19 @@ class DatabaseHelper {
   // La función real que hará el INSERT
     Future<int> insertUsuario(Usuario usuario) async {
     final db = await instance.database;
-    
     // 1. Convertimos la contraseña a bytes
     final bytes = utf8.encode(usuario.contrasena); 
-    
     // 2. Generamos el hash SHA-256
     final digest = sha256.convert(bytes);
-    
     // 3. Creamos el mapa con la contraseña original
-    Map<String, dynamic> usuarioMap = usuario.toMap();
-    
+    Map<String, dynamic> usuarioMap = usuario.toMap(); 
     // 4. SOBREESCRIBIMOS el valor de la contraseña con el hash
     usuarioMap['Contrasena'] = digest.toString(); 
-    
     // 5. INSERTAMOS usando usuarioMap (que ya tiene el hash)
     return await db.insert('Usuario', usuarioMap);
   }
 
-      // Método para insertar un partido
+    // Método para insertar un partido
   Future<int> insertPartido(Partido partido) async {
     final db = await instance.database;
     return await db.insert('PARTIDO', partido.toMap());
@@ -70,6 +65,7 @@ class DatabaseHelper {
     final db = await instance.database;
     return await db.insert('Accion', accion.toMap());
   }
+
     // Métodos para Tipo_Accion
   Future<int> insertTipoAccion(TipoAccion tipoAccion) async {
     final db = await instance.database;
@@ -85,23 +81,19 @@ class DatabaseHelper {
     // Método para el login
   Future<Map<String, dynamic>> login(String email, String password) async {
     final db = await instance.database;
-    
     // 1. Buscamos el usuario por email
     final List<Map<String, dynamic>> results = await db.query(
       'Usuario',
       where: 'Email = ?',
       whereArgs: [email],
     );
-
     if (results.isEmpty) {
       return {'success': false, 'message': 'El Gmail no está registrado'};
     }
-
     // 2. Hash de la contraseña ingresada para comparar
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
     final hashedInput = digest.toString();
-
     // 3. Comparar hashes
     if (results.first['Contrasena'] == hashedInput) {
       // Retornamos éxito y el usuario
@@ -115,6 +107,55 @@ class DatabaseHelper {
       return {'success': true, 'user': usuario};
     } else {
       return {'success': false, 'message': 'Contraseña incorrecta'};
+    } 
+  }
+
+  // --- GESTIÓN DE PARTIDOS ---
+  // CU 12: Eliminación con validación de estado
+  Future<Map<String, dynamic>> deletePartido(int idPartido) async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> results = await db.query(
+      'PARTIDO', where: 'Id_Partido = ?', whereArgs: [idPartido],
+    );
+    
+    if (results.isEmpty) return {'success': false, 'message': 'Partido no encontrado'};
+    
+    if (results.first['Estado_partido'] != 'Finalizado') {
+      return {'success': false, 'message': 'El partido debe estar Finalizado para eliminarlo'};
+    }
+    
+    await db.delete('PARTIDO', where: 'Id_Partido = ?', whereArgs: [idPartido]);
+    return {'success': true, 'message': 'Partido eliminado'};
+  }
+
+  // --- GESTIÓN DE ESTADÍSTICAS (CU 29 y Lógica de Pila) ---
+
+  // Obtener acciones para listar en pantalla
+  Future<List<Map<String, dynamic>>> getAccionesByPartido(int idPartido) async {
+    final db = await instance.database;
+    return await db.query('Accion', where: 'Id_Partido = ?', whereArgs: [idPartido], orderBy: 'Orden_Accion ASC');
+  }
+
+  // CU 29: Actualizar una acción específica
+  Future<int> updateAccion(Accion accion) async {
+    final db = await instance.database;
+    return await db.update('Accion', accion.toMap(), where: 'IdAccion = ?', whereArgs: [accion.id]);
+  }
+
+  // Lógica de "Pila": Deshacer última acción
+  Future<void> undoUltimaAccion(int idPartido) async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> results = await db.query(
+      'Accion',
+      where: 'Id_Partido = ?',
+      whereArgs: [idPartido],
+      orderBy: 'Orden_Accion DESC',
+      limit: 1,
+    );
+
+    if (results.isNotEmpty) {
+      int idAccionAEliminar = results.first['IdAccion'];
+      await db.delete('Accion', where: 'IdAccion = ?', whereArgs: [idAccionAEliminar]);
     }
   }
 }
