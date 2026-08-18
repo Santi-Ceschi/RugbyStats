@@ -57,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
                         
                         // LOGOTIPO
                         Image.asset(
-                          'assets/images/logo.png',
+                          'assets/images/logo.JPG',
                           height: 180,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
