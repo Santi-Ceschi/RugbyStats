@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
-    
+import 'home_page.dart';
+import 'services/database_helper.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -10,27 +12,44 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-      final username = _usernameController.text;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Iniciando sesión como: $username...'),
-          backgroundColor: Colors.black,
-        ),
-      );
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      // Llamada al método login de DatabaseHelper
+      final result = await DatabaseHelper.instance.login(email, password);
+
+      if (result['success'] == true) {
+        // Login exitoso, navegamos a la pantalla principal
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        }
+      } else {
+        // Login fallido, mostramos mensaje de error
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message']),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -60,37 +79,10 @@ class _LoginPageState extends State<LoginPage> {
                           'assets/images/logo.JPG',
                           height: 180,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: 180,
-                              width: 180,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey[300]!, width: 2),
-                              ),
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.sports_rugby, size: 60, color: Colors.black87),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'ALMA JUNIORS',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
                         ),
                         
                         const SizedBox(height: 24),
                         
-                        // TÍTULO Y SUBTÍTULO
                         const Text(
                           'RugbyStats',
                           style: TextStyle(
@@ -100,70 +92,36 @@ class _LoginPageState extends State<LoginPage> {
                             letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
+                        const Text(
                           'ALMA JUNIORS RUGBY',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
+                            color: Colors.grey,
                             letterSpacing: 1.5,
                           ),
                         ),
                         
                         const SizedBox(height: 36),
                         
-                        // CAMPO: USUARIO
+                        // CAMPO: EMAIL
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'USUARIO',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[600],
-                                letterSpacing: 1.0,
-                              ),
+                            const Text(
+                              'EMAIL',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
                             ),
                             const SizedBox(height: 8),
                             TextFormField(
-                              controller: _usernameController,
+                              controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                hintText: 'Ingresa tu usuario',
-                                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                                prefixIcon: const Icon(Icons.person_outline, color: Colors.black87, size: 22),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Colors.red, width: 1.0),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Colors.red, width: 1.5),
-                                ),
+                              decoration: const InputDecoration(
+                                hintText: 'Ingresa tu email',
+                                prefixIcon: Icon(Icons.email_outlined, color: Colors.black87),
+                                border: OutlineInputBorder(),
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Por favor ingresa tu usuario';
-                                }
-                                return null;
-                              },
+                              validator: (value) => (value == null || value.isEmpty) ? 'Ingresa tu email' : null,
                             ),
                           ],
                         ),
@@ -174,14 +132,9 @@ class _LoginPageState extends State<LoginPage> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'CONTRASEÑA',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[600],
-                                letterSpacing: 1.0,
-                              ),
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
                             ),
                             const SizedBox(height: 8),
                             TextFormField(
@@ -189,50 +142,14 @@ class _LoginPageState extends State<LoginPage> {
                               obscureText: !_isPasswordVisible,
                               decoration: InputDecoration(
                                 hintText: 'Ingresa tu contraseña',
-                                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                                prefixIcon: const Icon(Icons.lock_outline, color: Colors.black87, size: 22),
+                                prefixIcon: const Icon(Icons.lock_outline, color: Colors.black87),
                                 suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                                    color: Colors.grey[600],
-                                    size: 20,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    });
-                                  },
+                                  icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
+                                  onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Colors.red, width: 1.0),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Colors.red, width: 1.5),
-                                ),
+                                border: const OutlineInputBorder(),
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Por favor ingresa tu contraseña';
-                                }
-                                return null;
-                              },
+                              validator: (value) => (value == null || value.isEmpty) ? 'Ingresa tu contraseña' : null,
                             ),
                           ],
                         ),
@@ -245,48 +162,16 @@ class _LoginPageState extends State<LoginPage> {
                           height: 52,
                           child: ElevatedButton(
                             onPressed: _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                            ),
-                            child: const Text(
-                              'INICIAR SESIÓN',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white),
+                            child: const Text('INICIAR SESIÓN'),
                           ),
                         ),
-                        // En tu columna principal de LoginPage, añade esto donde quieras el botón:
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const RegisterPage()),
-                            );
-                          },
-                          child: const Text('¿No tenés cuenta? Registrate aquí'),
-                          ),
-                        const Spacer(),
                         
-                        // PIE DE PÁGINA: VERSIÓN
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16.0),
-                          child: Text(
-                            'v1.0.0',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
+                        TextButton(
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage())),
+                          child: const Text('¿No tenés cuenta? Registrate aquí'),
                         ),
+                        const Spacer(),
                       ],
                     ),
                   ),
