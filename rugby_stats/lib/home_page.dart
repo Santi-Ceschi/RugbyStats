@@ -11,8 +11,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Variables para el estado del filtro
-  bool _isFilterExpanded = false;
   String? _selectedDivision;
   final _dateFromController = TextEditingController();
   final _dateToController = TextEditingController();
@@ -100,31 +98,6 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildActionButtons(),
-
-            // PANEL DE FILTRADO (Ahora correctamente integrado en la columna)
-            Visibility(
-              visible: _isFilterExpanded,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12.0),
-                child: FilterPanel(
-                  dateFromController: _dateFromController,
-                  dateToController: _dateToController,
-                  selectedDivision: _selectedDivision,
-                  divisions: _divisions,
-                  onDivisionChanged: (val) =>
-                      setState(() => _selectedDivision = val),
-                  onApply: () {
-                    /* Lógica de filtrado aquí */
-                  },
-                  onClear: () => setState(() {
-                    _selectedDivision = null;
-                    _dateFromController.clear();
-                    _dateToController.clear();
-                  }),
-                ),
-              ),
-            ),
-
             const SizedBox(height: 24),
             const Text(
               'ÚLTIMOS PARTIDOS',
