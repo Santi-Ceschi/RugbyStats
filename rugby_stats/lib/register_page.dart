@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'models/usuario.dart';
+import 'services/database_helper.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -26,14 +28,28 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _register() {
+  Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registrando usuario...'),
-          backgroundColor: Colors.black,
-        ),
+      // Crear objeto usuario
+      final nuevoUsuario = Usuario(
+        nombre: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        telefono: _phoneController.text.trim(),
+        contrasena: _passwordController.text,
       );
+
+      // Guardar en la base de datos
+      await DatabaseHelper.instance.insertUsuario(nuevoUsuario);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registro exitoso. Ahora puedes iniciar sesión.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context); // Volver al login
+      }
     }
   }
 
@@ -112,7 +128,7 @@ class _RegisterPageState extends State<RegisterPage> {
           controller: controller,
           keyboardType: keyboardType,
           decoration: _inputDecoration(hint, icon),
-          validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+          validator: (value) => (value == null || value.isEmpty) ? 'Campo requerido' : null,
         ),
         const SizedBox(height: 20),
       ],
@@ -135,7 +151,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           validator: (value) {
-            if (value!.isEmpty) return 'Campo requerido';
+            if (value == null || value.isEmpty) return 'Campo requerido';
             if (isConfirm && value != _passwordController.text) return 'Las contraseñas no coinciden';
             return null;
           },
