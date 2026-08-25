@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
+import 'home_page.dart';
     
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -25,11 +26,18 @@ class _LoginPageState extends State<LoginPage> {
     if (_formKey.currentState!.validate()) {
       final username = _usernameController.text;
       
+      // Opcional: mostrar mensaje
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Iniciando sesión como: $username...'),
           backgroundColor: Colors.black,
         ),
+      );
+
+      // Navegar a la pantalla principal (HomePage)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     }
   }
