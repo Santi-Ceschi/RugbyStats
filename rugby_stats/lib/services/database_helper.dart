@@ -14,7 +14,6 @@ class DatabaseHelper {
 
   DatabaseHelper._init();
 
-  // --- CORRECCIÓN: Constante con el SQL de creación de tablas ---
   static const String _createDbQuery = '''
     CREATE TABLE Tipo_Accion (
       Id_Tipo_Accion INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,10 +66,11 @@ class DatabaseHelper {
     return _database!;
   }
 
-  // --- CORRECCIÓN: Implementación de onCreate ---
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
+    
+    print('--- RUTA DE LA BD: $path ---');
     
     return await openDatabase(
       path,
@@ -133,7 +133,7 @@ class DatabaseHelper {
       whereArgs: [email],
     );
     if (results.isEmpty) {
-      return {'success': false, 'message': 'El Gmail no está registrado'};
+      return {'success': false, 'message': 'El Email no está registrado'};
     }
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
