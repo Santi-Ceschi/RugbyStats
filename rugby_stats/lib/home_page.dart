@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'models/partido.dart';
 import 'widgets/partido_card.dart';
-import 'widgets/panel_filtrado.dart'; // Asegúrate de que este sea el nombre correcto del archivo
+import 'widgets/panel_filtrado.dart';
+import 'services/database_helper.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -31,7 +36,7 @@ class _HomePageState extends State<HomePage> {
       resultado: 'Victoria',
       torneo: 'Torneo Local',
       division: 'Primera',
-    ), // Asegúrate de incluir los campos que faltendivision: 'Primera'),
+    ),
     Partido(
       idPartido: 2,
       categoria: Categoria.intermedia,
@@ -67,6 +72,35 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  // --- LÓGICA DE BACKUP ---
+  Future<void> _exportarDatos() async {
+    final jsonString = await DatabaseHelper.instance.exportDatabaseToJson();
+    final directory = await getTemporaryDirectory();
+    final file = File('${directory.path}/backup_rugby.json');
+    await file.writeAsString(jsonString);
+    
+    // Uso correcto de shareXFiles
+    await Share.shareXFiles([XFile(file.path)], text: 'Backup de RugbyStats');
+  }
+
+  Future<void> _importarDatos() async {
+    // Especificar explícitamente el tipo de resultado
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+
+    if (result != null && result.files.single.path != null) {
+      File file = File(result.files.single.path!);
+      String jsonString = await file.readAsString();
+      await DatabaseHelper.instance.importDatabaseFromJson(jsonString);
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Backup importado exitosamente')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,11 +113,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             Text(
               'RugbyStats',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             Text(
               'Alma Juniors Rugby',
@@ -99,19 +129,11 @@ class _HomePageState extends State<HomePage> {
           children: [
             _buildActionButtons(),
             const SizedBox(height: 24),
-            const Text(
-              'ÚLTIMOS PARTIDOS',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text('ÚLTIMOS PARTIDOS', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Expanded(
               child: _partidos.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Aún no hay partidos registrados',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    )
+                  ? const Center(child: Text('Aún no hay partidos registrados', style: TextStyle(color: Colors.grey)))
                   : ListView.builder(
                       itemCount: _partidos.length,
                       itemBuilder: (context, index) => PartidoCard(
@@ -126,16 +148,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'INICIO',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.rss_feed), label: 'EN VIVO'),
-        ],
-        selectedItemColor: Colors.black,
-      ),
     );
   }
 
@@ -147,19 +159,11 @@ class _HomePageState extends State<HomePage> {
           height: 45,
           child: ElevatedButton(
             onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4))),
             child: const Text('+ INICIAR PARTIDO'),
           ),
         ),
         const SizedBox(height: 12),
-        // Botón que alterna la visibilidad del panel
-        // En tu método _buildActionButtons()
         ExpansionTile(
           title: const Text('Consultar más partidos'),
           leading: const Icon(Icons.filter_list),
@@ -171,11 +175,8 @@ class _HomePageState extends State<HomePage> {
                 dateToController: _dateToController,
                 selectedDivision: _selectedDivision,
                 divisions: _divisions,
-                onDivisionChanged: (val) =>
-                    setState(() => _selectedDivision = val),
-                onApply: () {
-                  /* Tu lógica de aplicación aquí */
-                },
+                onDivisionChanged: (val) => setState(() => _selectedDivision = val),
+                onApply: () {},
                 onClear: () => setState(() {
                   _selectedDivision = null;
                   _dateFromController.clear();
@@ -186,16 +187,26 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: () {},
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        ExpansionTile(
+          title: const Row(
             children: [
               Icon(Icons.backup_outlined),
-              Text(' REALIZAR BACKUP '),
-              Icon(Icons.arrow_drop_down),
+              SizedBox(width: 8),
+              Text('REALIZAR BACKUP'),
             ],
           ),
+          children: [
+            ListTile(
+              leading: const Icon(Icons.file_upload),
+              title: const Text('Exportar Datos'),
+              onTap: _exportarDatos,
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_download),
+              title: const Text('Importar Datos'),
+              onTap: _importarDatos,
+            ),
+          ],
         ),
       ],
     );

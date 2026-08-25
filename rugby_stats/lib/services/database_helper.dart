@@ -193,4 +193,58 @@ class DatabaseHelper {
       await db.delete('Accion', where: 'IdAccion = ?', whereArgs: [idAccionAEliminar]);
     }
   }
+
+  // --- EXPORTAR A JSON ---
+  Future<String> exportDatabaseToJson() async {
+    final db = await instance.database;
+    
+    final usuarios = await db.query('Usuario');
+    final partidos = await db.query('PARTIDO');
+    final acciones = await db.query('Accion');
+    final tiposAccion = await db.query('Tipo_Accion');
+    final reportes = await db.query('REPORTE');
+
+    final data = {
+      'Usuario': usuarios,
+      'PARTIDO': partidos,
+      'Accion': acciones,
+      'Tipo_Accion': tiposAccion,
+      'REPORTE': reportes,
+      'export_date': DateTime.now().toIso8601String(),
+    };
+
+    return jsonEncode(data);
+  }
+
+  // --- IMPORTAR DESDE JSON (Reemplazo total) ---
+  Future<void> importDatabaseFromJson(String jsonString) async {
+    final db = await instance.database;
+    final Map<String, dynamic> data = jsonDecode(jsonString);
+
+    await db.transaction((txn) async {
+      // 1. Limpiamos las tablas actuales
+      await txn.delete('Accion');
+      await txn.delete('REPORTE');
+      await txn.delete('PARTIDO');
+      await txn.delete('Usuario');
+      await txn.delete('Tipo_Accion');
+
+      // 2. Insertamos los nuevos datos
+      for (var item in (data['Tipo_Accion'] as List)) {
+        await txn.insert('Tipo_Accion', item as Map<String, dynamic>);
+      }
+      for (var item in (data['Usuario'] as List)) {
+        await txn.insert('Usuario', item as Map<String, dynamic>);
+      }
+      for (var item in (data['PARTIDO'] as List)) {
+        await txn.insert('PARTIDO', item as Map<String, dynamic>);
+      }
+      for (var item in (data['Accion'] as List)) {
+        await txn.insert('Accion', item as Map<String, dynamic>);
+      }
+      for (var item in (data['REPORTE'] as List)) {
+        await txn.insert('REPORTE', item as Map<String, dynamic>);
+      }
+    });
+  }
 }
