@@ -172,6 +172,31 @@ class DatabaseHelper {
     final db = await instance.database;
     return await db.query('Accion', where: 'Id_Partido = ?', whereArgs: [idPartido], orderBy: 'Orden_Accion ASC');
   }
+  //filtrar partidos
+  Future<List<Map<String, dynamic>>> getPartidosFiltrados(
+      String? division, String? fechaDesde, String? fechaHasta) async {
+    final db = await instance.database;
+
+    // Construcción dinámica de la query
+    String query = 'SELECT * FROM PARTIDO WHERE 1=1';
+    List<dynamic> args = [];
+
+    if (division != null && division.isNotEmpty) {
+      query += ' AND Division = ?';
+      args.add(division);
+    }
+    if (fechaDesde != null && fechaDesde.isNotEmpty) {
+      query += ' AND Fecha >= ?';
+      args.add(fechaDesde);
+    }
+    if (fechaHasta != null && fechaHasta.isNotEmpty) {
+      query += ' AND Fecha <= ?';
+      args.add(fechaHasta);
+    }
+
+    return await db.rawQuery(query, args);
+  }
+  
 
   Future<int> updateAccion(Accion accion) async {
     final db = await instance.database;
