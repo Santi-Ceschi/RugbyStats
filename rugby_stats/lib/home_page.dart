@@ -79,12 +79,12 @@ class _HomePageState extends State<HomePage> {
     final file = File('${directory.path}/backup_rugby.json');
     await file.writeAsString(jsonString);
     
-    // Uso correcto de shareXFiles
+    // Corregido: uso de Share.shareXFiles
     await Share.shareXFiles([XFile(file.path)], text: 'Backup de RugbyStats');
   }
 
   Future<void> _importarDatos() async {
-    // Especificar explícitamente el tipo de resultado
+    // Corregido: FilePickerResult es la clase correcta
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
@@ -113,7 +113,11 @@ class _HomePageState extends State<HomePage> {
           children: [
             Text(
               'RugbyStats',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
             Text(
               'Alma Juniors Rugby',
@@ -129,11 +133,19 @@ class _HomePageState extends State<HomePage> {
           children: [
             _buildActionButtons(),
             const SizedBox(height: 24),
-            const Text('ÚLTIMOS PARTIDOS', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'ÚLTIMOS PARTIDOS',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Expanded(
               child: _partidos.isEmpty
-                  ? const Center(child: Text('Aún no hay partidos registrados', style: TextStyle(color: Colors.grey)))
+                  ? const Center(
+                      child: Text(
+                        'Aún no hay partidos registrados',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: _partidos.length,
                       itemBuilder: (context, index) => PartidoCard(
@@ -148,6 +160,16 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'INICIO',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.rss_feed), label: 'EN VIVO'),
+        ],
+        selectedItemColor: Colors.black,
+      ),
     );
   }
 
@@ -159,7 +181,13 @@ class _HomePageState extends State<HomePage> {
           height: 45,
           child: ElevatedButton(
             onPressed: () {},
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4))),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
             child: const Text('+ INICIAR PARTIDO'),
           ),
         ),
@@ -175,7 +203,8 @@ class _HomePageState extends State<HomePage> {
                 dateToController: _dateToController,
                 selectedDivision: _selectedDivision,
                 divisions: _divisions,
-                onDivisionChanged: (val) => setState(() => _selectedDivision = val),
+                onDivisionChanged: (val) =>
+                    setState(() => _selectedDivision = val),
                 onApply: () {},
                 onClear: () => setState(() {
                   _selectedDivision = null;
