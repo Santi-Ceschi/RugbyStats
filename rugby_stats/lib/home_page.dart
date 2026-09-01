@@ -84,19 +84,30 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _importarDatos() async {
-    // Corregido: FilePickerResult es la clase correcta
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-    );
+    try {
+      PlatformFile? result = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
 
-    if (result != null && result.files.single.path != null) {
-      File file = File(result.files.single.path!);
-      String jsonString = await file.readAsString();
-      await DatabaseHelper.instance.importDatabaseFromJson(jsonString);
-      setState(() {});
+      if (result != null && result.path != null) {
+        File file = File(result.path!);
+        String jsonString = await file.readAsString();
+        
+        await DatabaseHelper.instance.importDatabaseFromJson(jsonString);
+        setState(() {});
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Backup importado exitosamente')),
+          );
+        }
+      }
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Backup importado exitosamente')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al importar backup: $e')),
+        );
       }
     }
   }
