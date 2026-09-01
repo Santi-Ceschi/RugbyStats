@@ -168,6 +168,36 @@ class DatabaseHelper {
     return {'success': true, 'message': 'Partido eliminado'};
   }
 
+  Future<List<Partido>> getPartidos({String? division, String? fechaDesde, String? fechaHasta}) async {
+    final db = await instance.database;
+    String whereString = "";
+    List<dynamic> whereArgs = [];
+
+    if (division != null && division.isNotEmpty) {
+      whereString += "Division COLLATE NOCASE = ? ";
+      whereArgs.add(division);
+    }
+    
+    if (fechaDesde != null && fechaDesde.isNotEmpty) {
+      if (whereString.isNotEmpty) whereString += " AND ";
+      whereString += "Fecha >= ? ";
+      whereArgs.add("$fechaDesde 00:00:00");
+    }
+    if (fechaHasta != null && fechaHasta.isNotEmpty) {
+      if (whereString.isNotEmpty) whereString += " AND ";
+      whereString += "Fecha <= ? ";
+      whereArgs.add("$fechaHasta 23:59:59");
+    }
+
+    final List<Map<String, dynamic>> results = await db.query(
+      'PARTIDO',
+      where: whereString.isNotEmpty ? whereString : null,
+      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+      orderBy: 'Fecha DESC'
+    );
+    return results.map((map) => Partido.fromMap(map)).toList();
+  }
+
   Future<List<Map<String, dynamic>>> getAccionesByPartido(int idPartido) async {
     final db = await instance.database;
     return await db.query('Accion', where: 'Id_Partido = ?', whereArgs: [idPartido], orderBy: 'Orden_Accion ASC');

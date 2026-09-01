@@ -34,7 +34,7 @@ class FilterPanel extends StatelessWidget {
           const Text('DIVISIÓN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: selectedDivision,
+            initialValue: selectedDivision,
             items: divisions.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
             onChanged: onDivisionChanged,
             decoration: _inputDecoration(),
@@ -42,9 +42,9 @@ class FilterPanel extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: _buildDateField('DESDE', dateFromController)),
+              Expanded(child: _buildDateField(context, 'DESDE', dateFromController)),
               const SizedBox(width: 16),
-              Expanded(child: _buildDateField('HASTA', dateToController)),
+              Expanded(child: _buildDateField(context, 'HASTA', dateToController)),
             ],
           ),
           const SizedBox(height: 24),
@@ -60,7 +60,7 @@ class FilterPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildDateField(String label, TextEditingController controller) {
+  Widget _buildDateField(BuildContext context, String label, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -68,7 +68,50 @@ class FilterPanel extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          decoration: _inputDecoration(hint: 'dd/mm/aaaa'),
+          readOnly: true,
+          decoration: _inputDecoration(hint: 'dd/mm/aaaa').copyWith(
+            suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+          ),
+          onTap: () async {
+            DateTime initial = DateTime.now();
+            if (controller.text.isNotEmpty) {
+              try {
+                final parts = controller.text.split('/');
+                if (parts.length == 3) {
+                  initial = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+                }
+              } catch (_) {}
+            }
+            
+            if (initial.isBefore(DateTime(2000))) initial = DateTime(2000);
+            if (initial.isAfter(DateTime(2100))) initial = DateTime(2100);
+
+            final DateTime? pickedDate = await showDatePicker(
+              context: context,
+              initialDate: initial,
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: const ColorScheme.light(
+                      primary: Colors.black,
+                      onPrimary: Colors.white,
+                      onSurface: Colors.black,
+                    ),
+                  ),
+                  child: child!,
+                );
+              },
+            );
+
+            if (pickedDate != null) {
+              final String day = pickedDate.day.toString().padLeft(2, '0');
+              final String month = pickedDate.month.toString().padLeft(2, '0');
+              final String year = pickedDate.year.toString();
+              controller.text = "$day/$month/$year";
+            }
+          },
         ),
       ],
     );

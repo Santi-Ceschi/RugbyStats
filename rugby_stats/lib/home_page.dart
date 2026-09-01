@@ -7,6 +7,8 @@ import 'models/partido.dart';
 import 'widgets/partido_card.dart';
 import 'widgets/panel_filtrado.dart';
 import 'services/database_helper.dart';
+import 'widgets/dialog_nuevo_partido.dart';
+import 'match_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,48 +24,34 @@ class _HomePageState extends State<HomePage> {
 
   final List<String> _divisions = ['Primera', 'Intermedia', 'Pre-Intermedia'];
 
-  // Mock data for now
-  final List<Partido> _partidos = [
-    Partido(
-      idPartido: 1,
-      categoria: Categoria.preIntermedia,
-      equipoVisitante: 'uni',
-      equipoLocal: 'rival',
-      estadoPartido: 'Finalizado',
-      fecha: DateTime(2026, 6, 15).toIso8601String(),
-      puntosLocal: 60,
-      puntosVisitante: 5,
-      resultado: 'Victoria',
-      torneo: 'Torneo Local',
-      division: 'Primera',
-    ),
-    Partido(
-      idPartido: 2,
-      categoria: Categoria.intermedia,
-      equipoVisitante: 'uni',
-      equipoLocal: 'rival',
-      estadoPartido: 'Finalizado',
-      fecha: DateTime(2026, 6, 15).toIso8601String(),
-      puntosLocal: 20,
-      puntosVisitante: 10,
-      resultado: 'Victoria',
-      torneo: 'Torneo Local',
-      division: 'Primera',
-    ),
-    Partido(
-      idPartido: 3,
-      categoria: Categoria.primera,
-      equipoVisitante: 'uni',
-      equipoLocal: 'rival',
-      estadoPartido: 'Finalizado',
-      fecha: DateTime(2026, 6, 15).toIso8601String(),
-      puntosLocal: 46,
-      puntosVisitante: 30,
-      resultado: 'Victoria',
-      torneo: 'Torneo Local',
-      division: 'Primera',
-    ),
-  ];
+  List<Partido> _partidos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarPartidos();
+  }
+
+  Future<void> _cargarPartidos() async {
+    String? formatearAISO(String fechaArg) {
+      if (fechaArg.isEmpty) return null;
+      try {
+        final p = fechaArg.split('/');
+        if (p.length != 3) return null; 
+        return "${p[2]}-${p[1]}-${p[0]}";
+      } catch (_) { return null; }
+    }
+
+    final partidosDB = await DatabaseHelper.instance.getPartidos(
+      division: _selectedDivision,
+      fechaDesde: formatearAISO(_dateFromController.text),
+      fechaHasta: formatearAISO(_dateToController.text),
+    );
+
+    setState(() {
+      _partidos = partidosDB;
+    });
+  }
 
   @override
   void dispose() {
@@ -191,7 +179,24 @@ class _HomePageState extends State<HomePage> {
           width: double.infinity,
           height: 45,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () async {
+              final nuevoPartidoId = await showDialog<int>(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const DialogNuevoPartido(),
+              );
+
+              if (nuevoPartidoId != null) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MatchPage(partidoId: nuevoPartidoId),
+                  ),
+                );
+                
+                _cargarPartidos(); 
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
               foregroundColor: Colors.white,
@@ -216,7 +221,9 @@ class _HomePageState extends State<HomePage> {
                 divisions: _divisions,
                 onDivisionChanged: (val) =>
                     setState(() => _selectedDivision = val),
-                onApply: () {},
+                onApply: () {
+                  _cargarPartidos();
+                },
                 onClear: () => setState(() {
                   _selectedDivision = null;
                   _dateFromController.clear();
