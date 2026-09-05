@@ -181,12 +181,12 @@ class DatabaseHelper {
     if (fechaDesde != null && fechaDesde.isNotEmpty) {
       if (whereString.isNotEmpty) whereString += " AND ";
       whereString += "Fecha >= ? ";
-      whereArgs.add("$fechaDesde 00:00:00");
+      whereArgs.add(fechaDesde);
     }
     if (fechaHasta != null && fechaHasta.isNotEmpty) {
       if (whereString.isNotEmpty) whereString += " AND ";
       whereString += "Fecha <= ? ";
-      whereArgs.add("$fechaHasta 23:59:59");
+      whereArgs.add("${fechaHasta}T23:59:59.999");
     }
 
     final List<Map<String, dynamic>> results = await db.query(

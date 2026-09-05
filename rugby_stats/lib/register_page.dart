@@ -38,17 +38,41 @@ class _RegisterPageState extends State<RegisterPage> {
         contrasena: _passwordController.text,
       );
 
-      // Guardar en la base de datos
-      await DatabaseHelper.instance.insertUsuario(nuevoUsuario);
+      try {
+        // Guardar en la base de datos
+        await DatabaseHelper.instance.insertUsuario(nuevoUsuario);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registro exitoso. Ahora puedes iniciar sesión.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context); // Volver al login
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registro exitoso. Ahora puedes iniciar sesión.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context); // Volver al login
+        }
+      } catch (e) {
+        if (mounted) {
+          if (e.toString().contains('UNIQUE')) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('El email ingresado ya está registrado. Usa otro o inicia sesión.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else {
+            // Log para los desarrolladores (consola)
+            debugPrint('Error interno al registrar: $e'); 
+            
+            // Mensaje amigable y seguro para el usuario (pantalla)
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ocurrió un error inesperado al registrar el usuario. Inténtalo de nuevo.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
       }
     }
   }

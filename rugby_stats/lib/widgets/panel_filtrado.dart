@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
 class FilterPanel extends StatelessWidget {
-  final TextEditingController dateFromController;
-  final TextEditingController dateToController;
+  final DateTimeRange? selectedDateRange;
   final String? selectedDivision;
   final List<String> divisions;
   final ValueChanged<String?> onDivisionChanged;
+  final ValueChanged<DateTimeRange?> onDateRangeChanged;
   final VoidCallback onApply;
   final VoidCallback onClear;
 
   const FilterPanel({
     super.key,
-    required this.dateFromController,
-    required this.dateToController,
+    required this.selectedDateRange,
     required this.selectedDivision,
     required this.divisions,
     required this.onDivisionChanged,
+    required this.onDateRangeChanged,
     required this.onApply,
     required this.onClear,
   });
@@ -40,12 +40,49 @@ class FilterPanel extends StatelessWidget {
             decoration: _inputDecoration(),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _buildDateField(context, 'DESDE', dateFromController)),
-              const SizedBox(width: 16),
-              Expanded(child: _buildDateField(context, 'HASTA', dateToController)),
-            ],
+          const Text('RANGO DE FECHAS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.date_range, size: 18),
+              label: Text(
+                selectedDateRange == null 
+                  ? 'Seleccionar rango de fechas' 
+                  : '${selectedDateRange!.start.day.toString().padLeft(2, '0')}/${selectedDateRange!.start.month.toString().padLeft(2, '0')}/${selectedDateRange!.start.year} al ${selectedDateRange!.end.day.toString().padLeft(2, '0')}/${selectedDateRange!.end.month.toString().padLeft(2, '0')}/${selectedDateRange!.end.year}',
+                style: TextStyle(color: selectedDateRange == null ? Colors.grey : Colors.black),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                alignment: Alignment.centerLeft,
+                side: BorderSide(color: Colors.grey[300]!),
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () async {
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                  initialDateRange: selectedDateRange,
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.light(
+                          primary: Colors.black,
+                          onPrimary: Colors.white,
+                          onSurface: Colors.black,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (picked != null) {
+                  onDateRangeChanged(picked);
+                }
+              },
+            ),
           ),
           const SizedBox(height: 24),
           Row(
@@ -57,63 +94,6 @@ class FilterPanel extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDateField(BuildContext context, String label, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          readOnly: true,
-          decoration: _inputDecoration(hint: 'dd/mm/aaaa').copyWith(
-            suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-          ),
-          onTap: () async {
-            DateTime initial = DateTime.now();
-            if (controller.text.isNotEmpty) {
-              try {
-                final parts = controller.text.split('/');
-                if (parts.length == 3) {
-                  initial = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
-                }
-              } catch (_) {}
-            }
-            
-            if (initial.isBefore(DateTime(2000))) initial = DateTime(2000);
-            if (initial.isAfter(DateTime(2100))) initial = DateTime(2100);
-
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: initial,
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2100),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.light(
-                      primary: Colors.black,
-                      onPrimary: Colors.white,
-                      onSurface: Colors.black,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
-            );
-
-            if (pickedDate != null) {
-              final String day = pickedDate.day.toString().padLeft(2, '0');
-              final String month = pickedDate.month.toString().padLeft(2, '0');
-              final String year = pickedDate.year.toString();
-              controller.text = "$day/$month/$year";
-            }
-          },
-        ),
-      ],
     );
   }
 

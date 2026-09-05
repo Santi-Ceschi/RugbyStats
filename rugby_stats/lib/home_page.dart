@@ -9,6 +9,7 @@ import 'widgets/panel_filtrado.dart';
 import 'services/database_helper.dart';
 import 'widgets/dialog_nuevo_partido.dart';
 import 'match_page.dart';
+import 'utils/app_constants.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,8 +20,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? _selectedDivision;
-  final _dateFromController = TextEditingController();
-  final _dateToController = TextEditingController();
+  DateTimeRange? _filtroRangoFechas;
 
   final List<String> _divisions = ['Primera', 'Intermedia', 'Pre-Intermedia'];
 
@@ -33,31 +33,15 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _cargarPartidos() async {
-    String? formatearAISO(String fechaArg) {
-      if (fechaArg.isEmpty) return null;
-      try {
-        final p = fechaArg.split('/');
-        if (p.length != 3) return null; 
-        return "${p[2]}-${p[1]}-${p[0]}";
-      } catch (_) { return null; }
-    }
-
     final partidosDB = await DatabaseHelper.instance.getPartidos(
       division: _selectedDivision,
-      fechaDesde: formatearAISO(_dateFromController.text),
-      fechaHasta: formatearAISO(_dateToController.text),
+      fechaDesde: _filtroRangoFechas != null ? _filtroRangoFechas!.start.toIso8601String().substring(0, 10) : null,
+      fechaHasta: _filtroRangoFechas != null ? _filtroRangoFechas!.end.toIso8601String().substring(0, 10) : null,
     );
 
     setState(() {
       _partidos = partidosDB;
     });
-  }
-
-  @override
-  void dispose() {
-    _dateFromController.dispose();
-    _dateToController.dispose();
-    super.dispose();
   }
 
   // --- LÓGICA DE BACKUP ---
@@ -83,7 +67,7 @@ class _HomePageState extends State<HomePage> {
         String jsonString = await file.readAsString();
         
         await DatabaseHelper.instance.importDatabaseFromJson(jsonString);
-        setState(() {});
+        _cargarPartidos();
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -119,7 +103,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             Text(
-              'Alma Juniors Rugby',
+              AppConstants.clubLocalName,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
@@ -141,7 +125,7 @@ class _HomePageState extends State<HomePage> {
               child: _partidos.isEmpty
                   ? const Center(
                       child: Text(
-                        'Aún no hay partidos registrados',
+                        'Aún no hay partidos registrados o coincidiendo con el filtro.',
                         style: TextStyle(color: Colors.grey),
                       ),
                     )
@@ -150,8 +134,16 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (context, index) => PartidoCard(
                         partido: _partidos[index],
                         onEdit: () {},
-                        onDelete: () {
-                          setState(() => _partidos.removeAt(index));
+                        onDelete: () async {
+                          if (_partidos[index].idPartido != null) {
+                            final res = await DatabaseHelper.instance.deletePartido(_partidos[index].idPartido!);
+                            if (res['success']) {
+                               _cargarPartidos();
+                               if (context.mounted) {
+                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
+                               }
+                            }
+                          }
                         },
                       ),
                     ),
@@ -187,12 +179,14 @@ class _HomePageState extends State<HomePage> {
               );
 
               if (nuevoPartidoId != null) {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MatchPage(partidoId: nuevoPartidoId),
-                  ),
-                );
+                if (mounted) {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MatchPage(partidoId: nuevoPartidoId),
+                    ),
+                  );
+                }
                 
                 _cargarPartidos(); 
               }
@@ -215,19 +209,20 @@ class _HomePageState extends State<HomePage> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: FilterPanel(
-                dateFromController: _dateFromController,
-                dateToController: _dateToController,
+                selectedDateRange: _filtroRangoFechas,
                 selectedDivision: _selectedDivision,
                 divisions: _divisions,
                 onDivisionChanged: (val) =>
                     setState(() => _selectedDivision = val),
+                onDateRangeChanged: (val) =>
+                    setState(() => _filtroRangoFechas = val),
                 onApply: () {
                   _cargarPartidos();
                 },
                 onClear: () => setState(() {
                   _selectedDivision = null;
-                  _dateFromController.clear();
-                  _dateToController.clear();
+                  _filtroRangoFechas = null;
+                  _cargarPartidos();
                 }),
               ),
             ),

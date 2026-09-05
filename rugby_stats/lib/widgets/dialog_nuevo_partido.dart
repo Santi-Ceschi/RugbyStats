@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/partido.dart';
 import '../services/database_helper.dart';
+import '../utils/app_constants.dart';
 
 class DialogNuevoPartido extends StatefulWidget {
   const DialogNuevoPartido({super.key});
@@ -12,44 +13,25 @@ class DialogNuevoPartido extends StatefulWidget {
 class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
   final _formKey = GlobalKey<FormState>();
   final _rivalController = TextEditingController();
-  final _fechaController = TextEditingController();
+  final _torneoController = TextEditingController();
   
   String _selectedDivision = 'Primera';
   bool _somosLocales = true;
   final List<String> _divisions = ['Primera', 'Intermedia', 'Pre-Intermedia'];
 
-  @override
-  void initState() {
-    super.initState();
-    // Precargar la fecha de hoy
-    final hoy = DateTime.now();
-    _fechaController.text = "${hoy.day.toString().padLeft(2, '0')}/${hoy.month.toString().padLeft(2, '0')}/${hoy.year}";
-  }
+  DateTime _fechaPartido = DateTime.now();
 
   @override
   void dispose() {
     _rivalController.dispose();
-    _fechaController.dispose();
+    _torneoController.dispose();
     super.dispose();
   }
 
   Future<void> _seleccionarFecha() async {
-    DateTime initial = DateTime.now();
-    if (_fechaController.text.isNotEmpty) {
-      try {
-        final p = _fechaController.text.split('/');
-        if (p.length == 3) {
-          initial = DateTime(int.parse(p[2]), int.parse(p[1]), int.parse(p[0]));
-        }
-      } catch (_) {}
-    }
-
-    if (initial.isBefore(DateTime(2000))) initial = DateTime(2000);
-    if (initial.isAfter(DateTime(2100))) initial = DateTime(2100);
-
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: initial,
+      initialDate: _fechaPartido,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
       builder: (context, child) {
@@ -66,29 +48,19 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
       },
     );
 
-    if (picked != null) {
-      final String day = picked.day.toString().padLeft(2, '0');
-      final String month = picked.month.toString().padLeft(2, '0');
-      final String year = picked.year.toString();
-      _fechaController.text = "$day/$month/$year";
+    if (picked != null && mounted) {
+      setState(() {
+        _fechaPartido = picked;
+      });
     }
   }
 
   Future<void> _comenzar() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Convertir dd/mm/aaaa a yyyy-mm-dd
-    String fechaIso = DateTime.now().toIso8601String();
-    try {
-      final p = _fechaController.text.split('/');
-      if (p.length == 3) {
-        fechaIso = "${p[2]}-${p[1]}-${p[0]}";
-      }
-    } catch (_) {}
-
     // Lógica de Negocio: Localía
-    String equipoLocal = _somosLocales ? "Mi Club" : _rivalController.text.trim();
-    String equipoVisitante = _somosLocales ? _rivalController.text.trim() : "Mi Club";
+    String equipoLocal = _somosLocales ? AppConstants.clubLocalName : _rivalController.text.trim();
+    String equipoVisitante = _somosLocales ? _rivalController.text.trim() : AppConstants.clubLocalName;
     
     // Mapeo de Categoría
     Categoria cat = Categoria.primera;
@@ -97,11 +69,11 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
 
     // Crear el modelo
     final nuevoPartido = Partido(
-      fecha: fechaIso,
+      fecha: _fechaPartido.toIso8601String(),
       equipoLocal: equipoLocal,
       equipoVisitante: equipoVisitante,
       estadoPartido: 'En curso',
-      torneo: 'Torneo Regular', // Por defecto
+      torneo: _torneoController.text.trim(),
       puntosLocal: 0,
       puntosVisitante: 0,
       division: _selectedDivision,
@@ -191,6 +163,17 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
                 ),
                 const SizedBox(height: 20),
 
+                // Campo Torneo
+                const Text('TORNEO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _torneoController,
+                  maxLength: 50,
+                  decoration: _inputDecoration(hint: 'Ej: TRL, Dos Orillas, etc.'),
+                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Requerido' : null,
+                ),
+                const SizedBox(height: 20),
+
                 // Campo División
                 const Text('DIVISIÓN', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
@@ -207,13 +190,23 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
                 // Campo Fecha
                 const Text('FECHA DEL PARTIDO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _fechaController,
-                  readOnly: true,
-                  decoration: _inputDecoration().copyWith(
-                    suffixIcon: const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                  ),
+                InkWell(
                   onTap: _seleccionarFecha,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("${_fechaPartido.day.toString().padLeft(2, '0')}/${_fechaPartido.month.toString().padLeft(2, '0')}/${_fechaPartido.year}"),
+                        const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 32),
 
