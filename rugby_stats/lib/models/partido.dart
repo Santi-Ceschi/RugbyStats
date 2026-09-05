@@ -55,7 +55,32 @@ class Partido {
     }
   }
 
-    Map<String, dynamic> toMap() {
+  factory Partido.fromMap(Map<String, dynamic> map) {
+    int local = map['Puntos_local'] ?? 0;
+    int visitante = map['Puntos_visitante'] ?? 0;
+    String res = local > visitante ? 'Victoria' : (local < visitante ? 'Derrota' : 'Empate');
+
+    Categoria cat = Categoria.primera;
+    if (map['Division'] == 'Intermedia') cat = Categoria.intermedia;
+    if (map['Division'] == 'Pre-Intermedia') cat = Categoria.preIntermedia;
+
+    return Partido(
+      idPartido: map['Id_Partido'],
+      fecha: map['Fecha'] ?? '',
+      equipoVisitante: map['Equipo_Visitante'] ?? '',
+      equipoLocal: map['Equipo_local'] ?? '',
+      estadoPartido: map['Estado_partido'] ?? '',
+      torneo: map['Torneo'] ?? '',
+      puntosLocal: local,
+      puntosVisitante: visitante,
+      division: map['Division'] ?? 'Primera',
+      idUsuario: map['Id_Usuario'],
+      categoria: cat,
+      resultado: res,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
     return {
       'Id_Partido': idPartido,
       'Fecha': fecha,

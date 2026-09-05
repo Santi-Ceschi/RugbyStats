@@ -14,7 +14,6 @@ class DatabaseHelper {
 
   DatabaseHelper._init();
 
-  // --- CORRECCIÓN: Constante con el SQL de creación de tablas ---
   static const String _createDbQuery = '''
     CREATE TABLE Tipo_Accion (
       Id_Tipo_Accion INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,10 +66,11 @@ class DatabaseHelper {
     return _database!;
   }
 
-  // --- CORRECCIÓN: Implementación de onCreate ---
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
+    
+    print('--- RUTA DE LA BD: $path ---');
     
     return await openDatabase(
       path,
@@ -133,7 +133,7 @@ class DatabaseHelper {
       whereArgs: [email],
     );
     if (results.isEmpty) {
-      return {'success': false, 'message': 'El Gmail no está registrado'};
+      return {'success': false, 'message': 'El Email no está registrado'};
     }
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
@@ -166,6 +166,36 @@ class DatabaseHelper {
     
     await db.delete('PARTIDO', where: 'Id_Partido = ?', whereArgs: [idPartido]);
     return {'success': true, 'message': 'Partido eliminado'};
+  }
+
+  Future<List<Partido>> getPartidos({String? division, String? fechaDesde, String? fechaHasta}) async {
+    final db = await instance.database;
+    String whereString = "";
+    List<dynamic> whereArgs = [];
+
+    if (division != null && division.isNotEmpty) {
+      whereString += "Division COLLATE NOCASE = ? ";
+      whereArgs.add(division);
+    }
+    
+    if (fechaDesde != null && fechaDesde.isNotEmpty) {
+      if (whereString.isNotEmpty) whereString += " AND ";
+      whereString += "Fecha >= ? ";
+      whereArgs.add("$fechaDesde 00:00:00");
+    }
+    if (fechaHasta != null && fechaHasta.isNotEmpty) {
+      if (whereString.isNotEmpty) whereString += " AND ";
+      whereString += "Fecha <= ? ";
+      whereArgs.add("$fechaHasta 23:59:59");
+    }
+
+    final List<Map<String, dynamic>> results = await db.query(
+      'PARTIDO',
+      where: whereString.isNotEmpty ? whereString : null,
+      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+      orderBy: 'Fecha DESC'
+    );
+    return results.map((map) => Partido.fromMap(map)).toList();
   }
 
   Future<List<Map<String, dynamic>>> getAccionesByPartido(int idPartido) async {
@@ -217,5 +247,59 @@ class DatabaseHelper {
       int idAccionAEliminar = results.first['IdAccion'];
       await db.delete('Accion', where: 'IdAccion = ?', whereArgs: [idAccionAEliminar]);
     }
+  }
+
+  // --- EXPORTAR A JSON ---
+  Future<String> exportDatabaseToJson() async {
+    final db = await instance.database;
+    
+    final usuarios = await db.query('Usuario');
+    final partidos = await db.query('PARTIDO');
+    final acciones = await db.query('Accion');
+    final tiposAccion = await db.query('Tipo_Accion');
+    final reportes = await db.query('REPORTE');
+
+    final data = {
+      'Usuario': usuarios,
+      'PARTIDO': partidos,
+      'Accion': acciones,
+      'Tipo_Accion': tiposAccion,
+      'REPORTE': reportes,
+      'export_date': DateTime.now().toIso8601String(),
+    };
+
+    return jsonEncode(data);
+  }
+
+  // --- IMPORTAR DESDE JSON (Reemplazo total) ---
+  Future<void> importDatabaseFromJson(String jsonString) async {
+    final db = await instance.database;
+    final Map<String, dynamic> data = jsonDecode(jsonString);
+
+    await db.transaction((txn) async {
+      // 1. Limpiamos las tablas actuales
+      await txn.delete('Accion');
+      await txn.delete('REPORTE');
+      await txn.delete('PARTIDO');
+      await txn.delete('Usuario');
+      await txn.delete('Tipo_Accion');
+
+      // 2. Insertamos los nuevos datos
+      for (var item in (data['Tipo_Accion'] as List)) {
+        await txn.insert('Tipo_Accion', item as Map<String, dynamic>);
+      }
+      for (var item in (data['Usuario'] as List)) {
+        await txn.insert('Usuario', item as Map<String, dynamic>);
+      }
+      for (var item in (data['PARTIDO'] as List)) {
+        await txn.insert('PARTIDO', item as Map<String, dynamic>);
+      }
+      for (var item in (data['Accion'] as List)) {
+        await txn.insert('Accion', item as Map<String, dynamic>);
+      }
+      for (var item in (data['REPORTE'] as List)) {
+        await txn.insert('REPORTE', item as Map<String, dynamic>);
+      }
+    });
   }
 }
