@@ -13,6 +13,10 @@ class Partido {
   final int puntosVisitante;
   final String division;
   final int? idUsuario;
+  
+  // Híbrido de tiempo
+  final String? horaInicio; 
+  final int minutosAjuste;
 
   // Campos de UI (NO se guardan en la tabla PARTIDO)
   final Categoria categoria;
@@ -29,6 +33,8 @@ class Partido {
     required this.puntosVisitante,
     required this.division,
     this.idUsuario,
+    this.horaInicio,
+    this.minutosAjuste = 0,
     required this.categoria,
     required this.resultado,
   });
@@ -75,6 +81,8 @@ class Partido {
       puntosVisitante: visitante,
       division: map['Division'] ?? 'Primera',
       idUsuario: map['Id_Usuario'],
+      horaInicio: map['Hora_Inicio'],
+      minutosAjuste: map['Minutos_Ajuste'] ?? 0,
       categoria: cat,
       resultado: res,
     );
@@ -92,6 +100,8 @@ class Partido {
       'Puntos_visitante': puntosVisitante,
       'Division': division,
       'Id_Usuario': idUsuario,
+      'Hora_Inicio': horaInicio,
+      'Minutos_Ajuste': minutosAjuste,
     };
   }
 }
