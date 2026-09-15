@@ -16,9 +16,15 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.black,
+        colorScheme: const ColorScheme.light(
           primary: Colors.black,
+          secondary: Colors.grey,
+          surface: Colors.white,
+          error: Colors.black,
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onSurface: Colors.black,
+          onError: Colors.white,
         ),
         useMaterial3: true,
       ),

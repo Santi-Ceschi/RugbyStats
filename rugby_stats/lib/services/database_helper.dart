@@ -5,6 +5,7 @@ import '../models/partido.dart';
 import '../models/accion.dart';
 import '../models/tipo_accion.dart';
 import '../models/reporte.dart';
+import '../utils/reglas_rugby.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
@@ -189,6 +190,11 @@ class DatabaseHelper {
     return {'success': true, 'message': 'Partido eliminado'};
   }
 
+  Future<List<Map<String, dynamic>>> getTiposAccion() async {
+    final db = await instance.database;
+    return await db.query('Tipo_Accion', orderBy: 'Nombre ASC');
+  }
+
   Future<List<Partido>> getPartidos({String? division, String? fechaDesde, String? fechaHasta}) async {
     final db = await instance.database;
     String whereString = "";
@@ -217,6 +223,125 @@ class DatabaseHelper {
       orderBy: 'Fecha DESC'
     );
     return results.map((map) => Partido.fromMap(map)).toList();
+  }
+
+  Future<Partido?> getPartidoById(int idPartido) async {
+    final db = await instance.database;
+    final results = await db.query(
+      'PARTIDO',
+      where: 'Id_Partido = ?',
+      whereArgs: [idPartido],
+      limit: 1,
+    );
+    if (results.isNotEmpty) {
+      return Partido.fromMap(results.first);
+    }
+    return null;
+  }
+
+  Future<bool> agregarAccionHistorica(int idPartido, Accion nuevaAccion, int puntosSumar) async {
+    final db = await instance.database;
+    
+    return await db.transaction((txn) async {
+      
+      final partidoRows = await txn.query(
+        'PARTIDO', 
+        where: 'Id_Partido = ?', 
+        whereArgs: [idPartido]
+      );
+      
+      if (partidoRows.isEmpty) {
+        throw Exception('El partido no existe.');
+      }
+      
+      final partido = partidoRows.first;
+      if (partido['Estado_partido'] != 'Finalizado') {
+        throw Exception('Solo se pueden editar estadísticas de partidos finalizados.');
+      }
+      
+      final maxOrdenQuery = await txn.rawQuery(
+        'SELECT MAX(Orden_Accion) as max_orden FROM Accion WHERE Id_Partido = ?', 
+        [idPartido]
+      );
+      int maxOrden = (maxOrdenQuery.first['max_orden'] as int?) ?? 0;
+      
+      Map<String, dynamic> accionMap = nuevaAccion.toMap();
+      accionMap['Orden_Accion'] = maxOrden + 1;
+      await txn.insert('Accion', accionMap);
+
+      if (puntosSumar > 0) {
+        String equipoAccionNorm = nuevaAccion.equipoAccion?.trim().toLowerCase() ?? '';
+        String equipoLocalNorm = (partido['Equipo_local'] as String?)?.trim().toLowerCase() ?? '';
+        String equipoVisitaNorm = (partido['Equipo_Visitante'] as String?)?.trim().toLowerCase() ?? '';
+
+        if (equipoAccionNorm.isEmpty) {
+          throw Exception('Equipo inválido');
+        }
+
+        String columnaPuntos;
+        if (equipoAccionNorm == equipoLocalNorm) {
+          columnaPuntos = 'Puntos_local';
+        } else if (equipoAccionNorm == equipoVisitaNorm) {
+          columnaPuntos = 'Puntos_visitante';
+        } else {
+          throw Exception('Inconsistencia: El equipo de la acción no coincide con los del partido.');
+        }
+            
+        await txn.rawUpdate(
+          'UPDATE PARTIDO SET $columnaPuntos = $columnaPuntos + ? WHERE Id_Partido = ?',
+          [puntosSumar, idPartido]
+        );
+      }
+      
+      return true;
+    });
+  }
+
+  Future<bool> eliminarAccionHistorica(int idAccion) async {
+    final db = await instance.database;
+    
+    return await db.transaction((txn) async {
+      final accionQuery = await txn.query('Accion', where: 'IdAccion = ?', whereArgs: [idAccion]);
+      if (accionQuery.isEmpty) return false;
+      
+      final accion = accionQuery.first;
+      final idPartido = accion['Id_Partido'] as int;
+      final equipoAccion = accion['Equipo_Accion'] as String;
+      
+      final tipoQuery = await txn.query('Tipo_Accion', where: 'Id_Tipo_Accion = ?', whereArgs: [accion['Id_Tipo_Accion']]);
+      final partidoQuery = await txn.query('PARTIDO', where: 'Id_Partido = ?', whereArgs: [idPartido]);
+      
+      if (tipoQuery.isNotEmpty && partidoQuery.isNotEmpty) {
+        final tipoName = tipoQuery.first['Nombre'] as String;
+        final resultadoStr = (accion['Resultado_Accion'] ?? '').toString();
+        final partido = partidoQuery.first;
+        
+        int puntosRestar = ReglasRugby.calcularPuntos(tipoName, resultado: resultadoStr);
+
+        if (puntosRestar > 0) {
+          String equipoAccionNorm = equipoAccion.trim().toLowerCase();
+          String equipoLocalNorm = (partido['Equipo_local'] as String?)?.trim().toLowerCase() ?? '';
+          String equipoVisitaNorm = (partido['Equipo_Visitante'] as String?)?.trim().toLowerCase() ?? '';
+          
+          String columnaPuntos;
+          if (equipoAccionNorm == equipoLocalNorm || equipoAccion == 'Local') {
+            columnaPuntos = 'Puntos_local';
+          } else if (equipoAccionNorm == equipoVisitaNorm || equipoAccion == 'Visitante') {
+            columnaPuntos = 'Puntos_visitante';
+          } else {
+            throw Exception('Inconsistencia: No se pudo identificar al equipo al borrar.');
+          }
+
+          await txn.rawUpdate(
+            'UPDATE PARTIDO SET $columnaPuntos = $columnaPuntos - ? WHERE Id_Partido = ?',
+            [puntosRestar, idPartido]
+          );
+        }
+      }
+      
+      await txn.delete('Accion', where: 'IdAccion = ?', whereArgs: [idAccion]);
+      return true;
+    });
   }
 
   Future<List<Map<String, dynamic>>> getAccionesByPartido(int idPartido) async {

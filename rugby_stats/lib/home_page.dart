@@ -8,7 +8,9 @@ import 'widgets/partido_card.dart';
 import 'widgets/panel_filtrado.dart';
 import 'services/database_helper.dart';
 import 'widgets/dialog_nuevo_partido.dart';
+import 'widgets/dialog_agregar_accion_historica.dart';
 import 'match_page.dart';
+import 'match_edit_page.dart';
 import 'utils/app_constants.dart';
 
 class HomePage extends StatefulWidget {
@@ -133,7 +135,22 @@ class _HomePageState extends State<HomePage> {
                       itemCount: _partidos.length,
                       itemBuilder: (context, index) => PartidoCard(
                         partido: _partidos[index],
-                        onEdit: () {},
+                        onEdit: () async {
+                          final p = _partidos[index];
+                          if (p.estadoPartido != 'Finalizado') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Solo se pueden editar estadísticas de partidos finalizados.'))
+                            );
+                            return;
+                          }
+
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => MatchEditPage(partido: p)),
+                          );
+
+                          _cargarPartidos();
+                        },
                         onDelete: () async {
                           if (_partidos[index].idPartido != null) {
                             final res = await DatabaseHelper.instance.deletePartido(_partidos[index].idPartido!);
