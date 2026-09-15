@@ -36,6 +36,8 @@ class DatabaseHelper {
       Puntos_local INTEGER DEFAULT 0,
       Puntos_visitante INTEGER DEFAULT 0,
       Division TEXT,
+      Hora_Inicio TEXT,
+      Minutos_Ajuste INTEGER DEFAULT 0,
       Id_Usuario INTEGER REFERENCES Usuario(IdUsuario) ON DELETE SET NULL
     );
     CREATE TABLE Accion (
@@ -72,9 +74,9 @@ class DatabaseHelper {
     
     print('--- RUTA DE LA BD: $path ---');
     
-    return await openDatabase(
+    final db = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         List<String> queries = _createDbQuery.split(';');
         for (String query in queries) {
@@ -83,7 +85,26 @@ class DatabaseHelper {
           }
         }
       },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE PARTIDO ADD COLUMN Hora_Inicio TEXT;');
+          await db.execute('ALTER TABLE PARTIDO ADD COLUMN Minutos_Ajuste INTEGER DEFAULT 0;');
+        }
+      },
     );
+    await _precargarTiposDeAccion(db);
+    return db;
+  }
+
+  Future<void> _precargarTiposDeAccion(Database db) async {
+    List<String> tiposBase = [
+      'Try', 'Patada', 'Scrum', 'Line', 'Maul', 'Salida', 
+      'Penales Cometidos', 'Tarjeta', 'Tackle', 'Error No Forzado'
+    ];
+    for (String tipo in tiposBase) {
+      // Ignorar si falla por el UNIQUE
+      await db.insert('Tipo_Accion', {'Nombre': tipo}, conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
   }
 
   Future<int> insertUsuario(Usuario usuario) async {
@@ -233,18 +254,66 @@ class DatabaseHelper {
     return await db.update('Accion', accion.toMap(), where: 'IdAccion = ?', whereArgs: [accion.id]);
   }
 
+  Future<void> updatePuntajePartido(int idPartido, int sumaLocal, int sumaVisitante) async {
+    final db = await instance.database;
+    await db.rawUpdate(
+      'UPDATE PARTIDO SET Puntos_local = Puntos_local + ?, Puntos_visitante = Puntos_visitante + ? WHERE Id_Partido = ?', 
+      [sumaLocal, sumaVisitante, idPartido]
+    );
+  }
+
+  Future<void> updateRelojPartido(int idPartido, String horaInicio, int minutosAjuste) async {
+    final db = await instance.database;
+    await db.update(
+      'PARTIDO',
+      {'Hora_Inicio': horaInicio, 'Minutos_Ajuste': minutosAjuste},
+      where: 'Id_Partido = ?',
+      whereArgs: [idPartido],
+    );
+  }
+
+  Future<void> finalizarPartido(int idPartido) async {
+    final db = await instance.database;
+    await db.update('PARTIDO', {'Estado_partido': 'Finalizado'}, where: 'Id_Partido = ?', whereArgs: [idPartido]);
+  }
+
   Future<void> undoUltimaAccion(int idPartido) async {
     final db = await instance.database;
     final List<Map<String, dynamic>> results = await db.query(
       'Accion',
       where: 'Id_Partido = ?',
       whereArgs: [idPartido],
-      orderBy: 'Orden_Accion DESC',
+      orderBy: 'IdAccion DESC',
       limit: 1,
     );
 
     if (results.isNotEmpty) {
-      int idAccionAEliminar = results.first['IdAccion'];
+      final accion = results.first;
+      int idAccionAEliminar = accion['IdAccion'];
+      int idTipoAccion = accion['Id_Tipo_Accion'];
+      
+      // Buscar el nombre del Tipo de Acción
+      final tipoQuery = await db.query('Tipo_Accion', where: 'Id_Tipo_Accion = ?', whereArgs: [idTipoAccion]);
+      
+      if (tipoQuery.isNotEmpty) {
+        String tipoName = tipoQuery.first['Nombre'] as String;
+        String res = (accion['Resultado_Accion'] ?? '').toString();
+        
+        int puntosRestar = 0;
+        if (tipoName == 'Try') puntosRestar = 5;
+        if (tipoName == 'Patada' && res == 'Conversión') puntosRestar = 2;
+        if (tipoName == 'Patada' && res == 'Penal a los Palos') puntosRestar = 3;
+
+        if (puntosRestar > 0) {
+          String equipo = accion['Equipo_Accion']; // 'Local' o 'Visitante'
+          if (equipo == 'Local') {
+            await db.rawUpdate('UPDATE PARTIDO SET Puntos_local = Puntos_local - ? WHERE Id_Partido = ?', [puntosRestar, idPartido]);
+          } else {
+            await db.rawUpdate('UPDATE PARTIDO SET Puntos_visitante = Puntos_visitante - ? WHERE Id_Partido = ?', [puntosRestar, idPartido]);
+          }
+        }
+      }
+
       await db.delete('Accion', where: 'IdAccion = ?', whereArgs: [idAccionAEliminar]);
     }
   }
