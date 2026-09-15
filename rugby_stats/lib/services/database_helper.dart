@@ -182,12 +182,15 @@ class DatabaseHelper {
     
     if (results.isEmpty) return {'success': false, 'message': 'Partido no encontrado'};
     
-    if (results.first['Estado_partido'] != 'Finalizado') {
-      return {'success': false, 'message': 'El partido debe estar Finalizado para eliminarlo'};
+    try {
+      await db.transaction((txn) async {
+        await txn.delete('Accion', where: 'Id_Partido = ?', whereArgs: [idPartido]);
+        await txn.delete('PARTIDO', where: 'Id_Partido = ?', whereArgs: [idPartido]);
+      });
+      return {'success': true, 'message': 'Partido y sus acciones eliminados'};
+    } catch (e) {
+      return {'success': false, 'message': 'Error al eliminar: $e'};
     }
-    
-    await db.delete('PARTIDO', where: 'Id_Partido = ?', whereArgs: [idPartido]);
-    return {'success': true, 'message': 'Partido eliminado'};
   }
 
   Future<List<Map<String, dynamic>>> getTiposAccion() async {

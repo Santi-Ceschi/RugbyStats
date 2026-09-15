@@ -6,12 +6,14 @@ class PartidoCard extends StatelessWidget {
   final Partido partido;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onPlay;
 
   const PartidoCard({
     super.key,
     required this.partido,
     required this.onEdit,
     required this.onDelete,
+    this.onPlay,
   });
 
   @override
@@ -56,6 +58,11 @@ class PartidoCard extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           // Acciones
+          if (partido.estadoPartido == 'En curso' && onPlay != null)
+            IconButton(
+              icon: const Icon(Icons.play_circle_fill, color: Colors.green, size: 28),
+              onPressed: onPlay,
+            ),
           IconButton(icon: const Icon(Icons.edit_outlined, size: 20), onPressed: onEdit),
           IconButton(icon: const Icon(Icons.delete_outline, size: 20), onPressed: onDelete),
         ],
