@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'models/partido.dart';
 import 'models/accion.dart';
 import 'services/database_helper.dart';
+import 'widgets/dialog_estadisticas_en_vivo.dart';
 
 class MatchPage extends StatefulWidget {
   final int partidoId;
@@ -109,6 +110,11 @@ class _MatchPageState extends State<MatchPage> {
   void _onActionTap(String actionName, String equipo) {
     if (_partido == null || _partido!.horaInicio == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inicia el cronómetro primero')));
+      return;
+    }
+    
+    if (_isPaused) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('El cronómetro está pausado. Reanúdalo para registrar.')));
       return;
     }
 
@@ -234,31 +240,47 @@ class _MatchPageState extends State<MatchPage> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 32.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('LOCAL', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                    Text(_partido!.equipoLocal, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  ],
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('LOCAL', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      Text(_partido!.equipoLocal, 
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-                Row(
-                  children: [
-                    Text('${_partido!.puntosLocal}', style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold)),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text('-', style: TextStyle(fontSize: 48, color: Colors.grey)),
-                    ),
-                    Text('${_partido!.puntosVisitante}', style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold)),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    children: [
+                      Text('${_partido!.puntosLocal}', style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold)),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text('-', style: TextStyle(fontSize: 48, color: Colors.grey)),
+                      ),
+                      Text('${_partido!.puntosVisitante}', style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text('VISITANTE', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                    Text(_partido!.equipoVisitante, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  ],
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text('VISITANTE', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      Text(_partido!.equipoVisitante, 
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -325,7 +347,14 @@ class _MatchPageState extends State<MatchPage> {
                   icon: const Icon(Icons.bar_chart),
                   label: const Text('ESTADÍSTICAS'),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Próximamente')));
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => DialogEstadisticasEnVivo(
+                        acciones: _acciones,
+                        tiposAccion: _tiposAccion,
+                        nombreEquipoLocal: _partido?.equipoLocal ?? 'Equipo Local',
+                      ),
+                    );
                   },
                 )
               ],
@@ -345,8 +374,9 @@ class _MatchPageState extends State<MatchPage> {
                     itemBuilder: (ctx, i) {
                       String btn = _botonesIzquierda[i];
                       return ListTile(
-                        leading: Text('${i + 1}'.padLeft(2, '0'), style: const TextStyle(color: Colors.grey)),
-                        title: Text(btn, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        title: Text(btn, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                         trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
                         onTap: () => _onActionTap(btn, 'Local'),
                       );
@@ -362,8 +392,9 @@ class _MatchPageState extends State<MatchPage> {
                     itemBuilder: (ctx, i) {
                       String btn = _botonesIzquierda[i];
                       return ListTile(
-                        leading: Text('${i + 1}'.padLeft(2, '0'), style: const TextStyle(color: Colors.grey)),
-                        title: Text(btn, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        title: Text(btn, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                         trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
                         onTap: () => _onActionTap(btn, 'Visitante'),
                       );
