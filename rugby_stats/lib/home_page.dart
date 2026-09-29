@@ -188,7 +188,19 @@ class _HomePageState extends State<HomePage> {
                           _cargarPartidos();
                         },
                         onDelete: () async {
-                          if (_partidos[index].idPartido != null) {
+                          final p = _partidos[index];
+                          
+                          if (p.estadoPartido != 'Finalizado') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Error: El partido debe estar Finalizado para eliminarse.'),
+                                backgroundColor: Colors.red,
+                              )
+                            );
+                            return;
+                          }
+                          
+                          if (p.idPartido != null) {
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (ctx) => AlertDialog(
