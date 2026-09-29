@@ -27,11 +27,38 @@ class _HomePageState extends State<HomePage> {
   final List<String> _divisions = ['Primera', 'Intermedia', 'Pre-Intermedia'];
 
   List<Partido> _partidos = [];
+  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _cargarPartidos();
+  }
+
+  void _onBottomNavTapped(int index) async {
+    if (index == 1) { // Tap en "EN VIVO"
+      final partidosEnCurso = _partidos.where((p) => p.estadoPartido == 'En curso').toList();
+      
+      if (partidosEnCurso.isNotEmpty) {
+        if (partidosEnCurso.length == 1) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MatchPage(partidoId: partidosEnCurso.first.idPartido!)),
+          );
+          _cargarPartidos();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tienes varios partidos en curso. Usa el botón Play de la lista.')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay ningún partido En Curso')),
+        );
+      }
+    } else {
+      setState(() => _currentIndex = index);
+    }
   }
 
   Future<void> _cargarPartidos() async {
@@ -135,6 +162,15 @@ class _HomePageState extends State<HomePage> {
                       itemCount: _partidos.length,
                       itemBuilder: (context, index) => PartidoCard(
                         partido: _partidos[index],
+                        onPlay: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MatchPage(partidoId: _partidos[index].idPartido!),
+                            ),
+                          );
+                          _cargarPartidos();
+                        },
                         onEdit: () async {
                           final p = _partidos[index];
                           if (p.estadoPartido != 'Finalizado') {
@@ -153,12 +189,30 @@ class _HomePageState extends State<HomePage> {
                         },
                         onDelete: () async {
                           if (_partidos[index].idPartido != null) {
-                            final res = await DatabaseHelper.instance.deletePartido(_partidos[index].idPartido!);
-                            if (res['success']) {
-                               _cargarPartidos();
-                               if (context.mounted) {
-                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
-                               }
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('¿Eliminar Partido?'),
+                                content: const Text('¿Estás seguro de eliminar este partido y todo su historial de acciones? Esta acción es irreversible.'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCELAR')),
+                                  TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('ELIMINAR', style: TextStyle(color: Colors.red))),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              final res = await DatabaseHelper.instance.deletePartido(_partidos[index].idPartido!);
+                              if (res['success']) {
+                                 _cargarPartidos();
+                                 if (context.mounted) {
+                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
+                                 }
+                              } else {
+                                 if (context.mounted) {
+                                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message'])));
+                                 }
+                              }
                             }
                           }
                         },
@@ -169,6 +223,8 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onBottomNavTapped,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
