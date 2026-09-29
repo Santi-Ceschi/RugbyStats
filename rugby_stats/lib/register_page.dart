@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'models/usuario.dart';
 import 'services/database_helper.dart';
 
@@ -142,7 +143,18 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // WARNING: La validación interna de este campo depende de la palabra exacta 'TELÉFONO' o 'EMAIL'
+  // enviada en el parámetro `label`. Si se altera el diseño visual de los textos, las validaciones podrían fallar.
   Widget _buildField(String label, String hint, IconData icon, TextEditingController controller, {TextInputType keyboardType = TextInputType.text}) {
+    List<TextInputFormatter>? formatters;
+    int? maxLength;
+
+    // Si es el campo de teléfono, solo permitimos números y un límite de 15 caracteres
+    if (label == 'TELÉFONO') {
+      formatters = [FilteringTextInputFormatter.digitsOnly];
+      maxLength = 15;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -151,8 +163,27 @@ class _RegisterPageState extends State<RegisterPage> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          decoration: _inputDecoration(hint, icon),
-          validator: (value) => (value == null || value.isEmpty) ? 'Campo requerido' : null,
+          inputFormatters: formatters,
+          maxLength: maxLength,
+          decoration: _inputDecoration(hint, icon).copyWith(
+            counterText: '', // Oculta el contador "0/15" debajo del input
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) return 'Campo requerido';
+
+            if (label == 'EMAIL') {
+              // Expresión regular para validar formato de email
+              final emailRegex = RegExp(r'^[^@]+@[^@]+\.[a-zA-Z]{2,}$');
+              if (!emailRegex.hasMatch(value)) {
+                return 'Ingresa un correo electrónico válido';
+              }
+            } else if (label == 'TELÉFONO') {
+              if (value.length < 8) {
+                return 'El teléfono debe tener al menos 8 números';
+              }
+            }
+            return null;
+          },
         ),
         const SizedBox(height: 20),
       ],
