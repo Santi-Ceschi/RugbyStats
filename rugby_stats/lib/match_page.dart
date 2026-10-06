@@ -4,6 +4,7 @@ import 'models/partido.dart';
 import 'models/accion.dart';
 import 'services/database_helper.dart';
 import 'widgets/dialog_estadisticas_en_vivo.dart';
+import 'reporte_final_page.dart';
 
 class MatchPage extends StatefulWidget {
   final int partidoId;
@@ -306,10 +307,32 @@ class _MatchPageState extends State<MatchPage> {
                           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCELAR')),
                           TextButton(
                             onPressed: () async {
-                              await DatabaseHelper.instance.finalizarPartido(widget.partidoId);
-                              if (mounted) {
-                                Navigator.pop(ctx);
-                                Navigator.pop(context); // Volver al home
+                              try {
+                                await DatabaseHelper.instance.finalizarPartido(widget.partidoId);
+                                if (mounted) {
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                      builder: (_) => ReporteFinalPage(
+                                        partido: _partido!,
+                                        acciones: _acciones,
+                                        tiposAccion: _tiposAccion,
+                                        duracionTotal: _getTiempoDisplay(),
+                                      ),
+                                    ),
+                                    (route) => route.isFirst,
+                                  );
+                                }
+                              } catch (e) {
+                                debugPrint('Error DB: $e');
+                                if (mounted) {
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Ocurrió un error inesperado al finalizar el partido. Por favor, inténtalo de nuevo.'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               }
                             }, 
                             child: const Text('FINALIZAR', style: TextStyle(color: Colors.red)),
