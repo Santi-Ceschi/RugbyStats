@@ -347,6 +347,12 @@ class DatabaseHelper {
     });
   }
 
+  Future<List<String>> getTorneosUnicos() async {
+    final db = await instance.database;
+    final results = await db.rawQuery("SELECT DISTINCT Torneo FROM PARTIDO WHERE Torneo IS NOT NULL AND Torneo != ''");
+    return results.map((row) => row['Torneo'] as String).toList();
+  }
+
   Future<List<Map<String, dynamic>>> getAccionesByPartido(int idPartido) async {
     final db = await instance.database;
     return await db.query('Accion', where: 'Id_Partido = ?', whereArgs: [idPartido], orderBy: 'Orden_Accion ASC');

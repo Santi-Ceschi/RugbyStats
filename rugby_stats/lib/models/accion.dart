@@ -17,6 +17,18 @@ class Accion {
     required this.idPartido,
   });
 
+  factory Accion.fromMap(Map<String, dynamic> map) {
+    return Accion(
+      id: map['IdAccion'],
+      resultadoAccion: map['Resultado_Accion'] ?? '',
+      idTipoAccion: map['Id_Tipo_Accion'],
+      tiempoAccion: map['Tiempo_Accion'] ?? '',
+      ordenAccion: map['Orden_Accion'] ?? 0,
+      equipoAccion: map['Equipo_Accion'] ?? '',
+      idPartido: map['Id_Partido'],
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'Resultado_Accion': resultadoAccion,

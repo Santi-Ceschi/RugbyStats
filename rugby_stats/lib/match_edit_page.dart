@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'models/partido.dart';
+import 'models/accion.dart';
 import 'services/database_helper.dart';
 import 'widgets/dialog_agregar_accion_historica.dart';
 

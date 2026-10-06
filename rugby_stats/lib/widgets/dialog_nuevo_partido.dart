@@ -13,7 +13,7 @@ class DialogNuevoPartido extends StatefulWidget {
 class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
   final _formKey = GlobalKey<FormState>();
   final _rivalController = TextEditingController();
-  final _torneoController = TextEditingController();
+  final _torneoPersonalizadoController = TextEditingController();
   
   String _selectedDivision = 'Primera';
   bool _somosLocales = true;
@@ -21,10 +21,35 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
 
   DateTime _fechaPartido = DateTime.now();
 
+  bool _isLoadingTorneos = true;
+  List<String> _listaDinamicaDeTorneos = [];
+  String? _selectedTorneo;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarTorneos();
+  }
+
+  Future<void> _cargarTorneos() async {
+    final torneosBD = await DatabaseHelper.instance.getTorneosUnicos();
+    if (mounted) {
+      setState(() {
+        _listaDinamicaDeTorneos = [...torneosBD, 'Otro'];
+        if (torneosBD.isEmpty) {
+          _selectedTorneo = 'Otro';
+        } else {
+          _selectedTorneo = torneosBD.first;
+        }
+        _isLoadingTorneos = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _rivalController.dispose();
-    _torneoController.dispose();
+    _torneoPersonalizadoController.dispose();
     super.dispose();
   }
 
@@ -67,13 +92,18 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
     if (_selectedDivision == 'Intermedia') cat = Categoria.intermedia;
     if (_selectedDivision == 'Pre-Intermedia') cat = Categoria.preIntermedia;
 
+    // Sanitizar Torneo
+    final String torneoAGuardar = _selectedTorneo == 'Otro' 
+        ? _torneoPersonalizadoController.text.trim().replaceAll(RegExp(r'\s+'), ' ') 
+        : _selectedTorneo!;
+
     // Crear el modelo
     final nuevoPartido = Partido(
       fecha: _fechaPartido.toIso8601String(),
       equipoLocal: equipoLocal,
       equipoVisitante: equipoVisitante,
       estadoPartido: 'En curso',
-      torneo: _torneoController.text.trim(),
+      torneo: torneoAGuardar,
       puntosLocal: 0,
       puntosVisitante: 0,
       division: _selectedDivision,
@@ -166,12 +196,27 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
                 // Campo Torneo
                 const Text('TORNEO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _torneoController,
-                  maxLength: 50,
-                  decoration: _inputDecoration(hint: 'Ej: TRL, Dos Orillas, etc.'),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Requerido' : null,
-                ),
+                if (_isLoadingTorneos)
+                  const Center(child: CircularProgressIndicator(color: Colors.black))
+                else ...[
+                  DropdownButtonFormField<String>(
+                    value: _selectedTorneo,
+                    items: _listaDinamicaDeTorneos.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedTorneo = val);
+                    },
+                    decoration: _inputDecoration(),
+                  ),
+                  if (_selectedTorneo == 'Otro') ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _torneoPersonalizadoController,
+                      maxLength: 50,
+                      decoration: _inputDecoration(hint: 'Escribe el nombre del torneo'),
+                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Requerido' : null,
+                    ),
+                  ]
+                ],
                 const SizedBox(height: 20),
 
                 // Campo División
