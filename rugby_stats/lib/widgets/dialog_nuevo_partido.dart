@@ -107,6 +107,7 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
       puntosLocal: 0,
       puntosVisitante: 0,
       division: _selectedDivision,
+      somosLocal: _somosLocales,
       categoria: cat,
       resultado: 'Empate', // Inicial
     );

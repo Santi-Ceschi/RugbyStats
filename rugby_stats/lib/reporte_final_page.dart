@@ -42,6 +42,8 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
   late int _tarjetas;
   late int _penales;
 
+  late String _miEquipo;
+
   @override
   void initState() {
     super.initState();
@@ -49,10 +51,15 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
   }
 
   void _procesarDatos() {
-    // 1. Condición Final
-    if (widget.partido.puntosLocal > widget.partido.puntosVisitante) {
+    _miEquipo = widget.partido.somosLocal ? 'Local' : 'Visitante';
+
+    // 1. Condición Final basada en Localía
+    int misPuntos = widget.partido.somosLocal ? widget.partido.puntosLocal : widget.partido.puntosVisitante;
+    int puntosRival = widget.partido.somosLocal ? widget.partido.puntosVisitante : widget.partido.puntosLocal;
+
+    if (misPuntos > puntosRival) {
       _condicionFinal = 'VICTORIA';
-    } else if (widget.partido.puntosLocal < widget.partido.puntosVisitante) {
+    } else if (misPuntos < puntosRival) {
       _condicionFinal = 'DERROTA';
     } else {
       _condicionFinal = 'EMPATE';
@@ -80,7 +87,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
     int? idAccion = widget.tiposAccion[nombre];
     if (idAccion == null) return {'total': 0, 'ganados': 0, 'porcentaje': 0, 'alerta': 'Sin datos'};
 
-    final filtradas = widget.acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local');
+    final filtradas = widget.acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == _miEquipo);
     int total = filtradas.length;
     int ganados = filtradas.where((a) => a['Resultado_Accion'] == 'Ganada').length;
     
@@ -97,7 +104,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
     int? idAccion = widget.tiposAccion['Tackle'];
     if (idAccion == null) return {'total': 0, 'ganados': 0, 'porcentaje': 0, 'alerta': 'Sin datos'};
 
-    final filtradas = widget.acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local');
+    final filtradas = widget.acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == _miEquipo);
     int total = filtradas.length;
     int ganados = filtradas.where((a) => a['Resultado_Accion'] == 'Positivo').length;
     
@@ -113,7 +120,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
   int _contarAccion(String nombre) {
     int? idAccion = widget.tiposAccion[nombre];
     if (idAccion == null) return 0;
-    return widget.acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local').length;
+    return widget.acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == _miEquipo).length;
   }
 
   String _obtenerAlertaTextual(int porcentaje, int total) {
@@ -218,12 +225,17 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
             ElevatedButton.icon(
               onPressed: () async {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generando PDF...')));
+                
+                String nombreOponente = widget.partido.somosLocal 
+                    ? widget.partido.equipoVisitante 
+                    : widget.partido.equipoLocal;
+
                 try {
                   await PdfGenerator.generateAndSharePdf(
                     fecha: _fechaActual,
                     hora: '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
                     division: widget.partido.division,
-                    oponente: widget.partido.equipoVisitante,
+                    oponente: nombreOponente,
                     duracion: widget.duracionTotal,
                     resultado: _condicionFinal,
                     puntosLocal: widget.partido.puntosLocal,

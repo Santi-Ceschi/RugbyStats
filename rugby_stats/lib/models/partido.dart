@@ -17,6 +17,9 @@ class Partido {
   // Híbrido de tiempo
   final String? horaInicio; 
   final int minutosAjuste;
+  
+  // Bandera de Localía (Grado Arquitectónico)
+  final bool somosLocal;
 
   // Campos de UI (NO se guardan en la tabla PARTIDO)
   final Categoria categoria;
@@ -35,6 +38,7 @@ class Partido {
     this.idUsuario,
     this.horaInicio,
     this.minutosAjuste = 0,
+    this.somosLocal = true,
     required this.categoria,
     required this.resultado,
   });
@@ -83,6 +87,7 @@ class Partido {
       idUsuario: map['Id_Usuario'],
       horaInicio: map['Hora_Inicio'],
       minutosAjuste: map['Minutos_Ajuste'] ?? 0,
+      somosLocal: (map['Somos_Local'] ?? 1) == 1,
       categoria: cat,
       resultado: res,
     );
@@ -102,6 +107,7 @@ class Partido {
       'Id_Usuario': idUsuario,
       'Hora_Inicio': horaInicio,
       'Minutos_Ajuste': minutosAjuste,
+      'Somos_Local': somosLocal ? 1 : 0,
     };
   }
 }
