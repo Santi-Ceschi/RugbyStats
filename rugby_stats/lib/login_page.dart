@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'register_page.dart';
 import 'home_page.dart';
 import 'services/database_helper.dart';
@@ -171,6 +173,19 @@ class _LoginPageState extends State<LoginPage> {
                           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage())),
                           child: const Text('¿No tenés cuenta? Registrate aquí'),
                         ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // BOTÓN DE IMPORTAR BACKUP
+                        TextButton.icon(
+                          onPressed: _importarBackup,
+                          icon: const Icon(Icons.restore, color: Colors.black54),
+                          label: const Text(
+                            'Importar Backup',
+                            style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        
                         const Spacer(),
                       ],
                     ),
@@ -182,5 +197,40 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _importarBackup() async {
+    try {
+      // Necesita import 'dart:io'; y import 'package:file_picker/file_picker.dart';
+      PlatformFile? result = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result != null && result.path != null) {
+        File file = File(result.path!);
+        String jsonString = await file.readAsString();
+        
+        await DatabaseHelper.instance.importDatabaseFromJson(jsonString);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Backup importado exitosamente. Ahora puedes iniciar sesión.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al importar backup: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

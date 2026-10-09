@@ -83,9 +83,9 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
   Future<void> _comenzar() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Lógica de Negocio: Localía
-    String equipoLocal = _somosLocales ? AppConstants.clubLocalName : _rivalController.text.trim();
-    String equipoVisitante = _somosLocales ? _rivalController.text.trim() : AppConstants.clubLocalName;
+    // Lógica Estructural (Alma Juniors SIEMPRE es el lado izquierdo/Local en el modelo)
+    String equipoLocal = AppConstants.clubLocalName;
+    String equipoVisitante = _rivalController.text.trim();
     
     // Mapeo de Categoría
     Categoria cat = Categoria.primera;
