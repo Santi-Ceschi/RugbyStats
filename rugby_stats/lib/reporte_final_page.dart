@@ -42,6 +42,8 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
   late int _tarjetas;
   late int _penales;
 
+  late String _miEquipo;
+
   @override
   void initState() {
     super.initState();
@@ -49,7 +51,8 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
   }
 
   void _procesarDatos() {
-    // 1. Condición Final
+    // 1. Condición Final basada en puntos
+    // Alma Juniors siempre es 'Local' estructuralmente
     if (widget.partido.puntosLocal > widget.partido.puntosVisitante) {
       _condicionFinal = 'VICTORIA';
     } else if (widget.partido.puntosLocal < widget.partido.puntosVisitante) {
@@ -214,16 +217,19 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
             _buildSimpleCard('Penales Cometidos', _penales),
 
             const SizedBox(height: 32),
-            // Botones inferiores
             ElevatedButton.icon(
               onPressed: () async {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generando PDF...')));
+                
+                String nombreOponente = widget.partido.equipoVisitante;
+                String txtCondicion = widget.partido.somosLocal ? 'Local' : 'Visitante';
+
                 try {
                   await PdfGenerator.generateAndSharePdf(
                     fecha: _fechaActual,
                     hora: '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
                     division: widget.partido.division,
-                    oponente: widget.partido.equipoVisitante,
+                    oponente: '$nombreOponente ($txtCondicion)',
                     duracion: widget.duracionTotal,
                     resultado: _condicionFinal,
                     puntosLocal: widget.partido.puntosLocal,

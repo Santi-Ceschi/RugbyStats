@@ -39,6 +39,7 @@ class DatabaseHelper {
       Division TEXT,
       Hora_Inicio TEXT,
       Minutos_Ajuste INTEGER DEFAULT 0,
+      Somos_Local INTEGER DEFAULT 1,
       Id_Usuario INTEGER REFERENCES Usuario(IdUsuario) ON DELETE SET NULL
     );
     CREATE TABLE Accion (
@@ -77,7 +78,7 @@ class DatabaseHelper {
     
     final db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         List<String> queries = _createDbQuery.split(';');
         for (String query in queries) {
@@ -90,6 +91,9 @@ class DatabaseHelper {
         if (oldVersion < 2) {
           await db.execute('ALTER TABLE PARTIDO ADD COLUMN Hora_Inicio TEXT;');
           await db.execute('ALTER TABLE PARTIDO ADD COLUMN Minutos_Ajuste INTEGER DEFAULT 0;');
+        }
+        if (oldVersion < 3) {
+          await db.execute('ALTER TABLE PARTIDO ADD COLUMN Somos_Local INTEGER DEFAULT 1;');
         }
       },
     );
