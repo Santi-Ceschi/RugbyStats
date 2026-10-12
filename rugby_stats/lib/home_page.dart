@@ -8,9 +8,9 @@ import 'widgets/partido_card.dart';
 import 'widgets/panel_filtrado.dart';
 import 'services/database_helper.dart';
 import 'widgets/dialog_nuevo_partido.dart';
-import 'widgets/dialog_agregar_accion_historica.dart';
 import 'match_page.dart';
 import 'match_edit_page.dart';
+import 'reporte_final_page.dart';
 import 'utils/app_constants.dart';
 import 'login_page.dart';
 
@@ -204,6 +204,37 @@ class _HomePageState extends State<HomePage> {
                       itemCount: _partidos.length,
                       itemBuilder: (context, index) => PartidoCard(
                         partido: _partidos[index],
+                        onTap: () async {
+                          final p = _partidos[index];
+                          if (p.estadoPartido == 'Finalizado') {
+                            final acciones = await DatabaseHelper.instance.getAccionesByPartido(p.idPartido!);
+                            final tipos = await DatabaseHelper.instance.getTiposAccion();
+                            final tiposMap = { for (var t in tipos) t['Nombre'] as String : t['Id_Tipo_Accion'] as int };
+
+                            if (context.mounted) {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ReporteFinalPage(
+                                    partido: p,
+                                    acciones: acciones,
+                                    tiposAccion: tiposMap,
+                                    duracionTotal: p.horaInicio ?? '80m',
+                                  ),
+                                ),
+                              );
+                              _cargarPartidos();
+                            }
+                          } else if (p.estadoPartido == 'En curso') {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MatchPage(partidoId: p.idPartido!),
+                              ),
+                            );
+                            _cargarPartidos();
+                          }
+                        },
                         onPlay: () async {
                           await Navigator.push(
                             context,

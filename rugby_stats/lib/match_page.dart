@@ -5,6 +5,7 @@ import 'models/accion.dart';
 import 'services/database_helper.dart';
 import 'widgets/dialog_estadisticas_en_vivo.dart';
 import 'reporte_final_page.dart';
+import 'utils/app_constants.dart';
 
 class MatchPage extends StatefulWidget {
   final int partidoId;
@@ -122,7 +123,21 @@ class _MatchPageState extends State<MatchPage> {
     if (actionName == 'Patada') {
       _showSubOptions(actionName, equipo, ['Conversión', 'Penal a los Palos', 'Errada']);
     } else if (['Scrum', 'Line', 'Maul', 'Salida'].contains(actionName)) {
-      _showSubOptions(actionName, equipo, ['Ganada', 'Perdida']);
+      if (equipo == 'Local') {
+        _showSubOptions(
+          actionName, 
+          equipo, 
+          ['Ganada', 'Perdida'],
+          labels: ['✓ Ganada (Pelota asegurada)', '✗ Perdida (Pelota perdida)'],
+        );
+      } else {
+        _showSubOptions(
+          actionName, 
+          equipo, 
+          ['Ganada', 'Perdida'],
+          labels: ['✓ Robada / Ganada por Alma', '✗ Mantiene Rival'],
+        );
+      }
     } else if (actionName == 'Tackle') {
       _showSubOptions(actionName, equipo, ['Positivo', 'Negativo']);
     } else if (actionName == 'Penales Cometidos') {
@@ -134,20 +149,25 @@ class _MatchPageState extends State<MatchPage> {
     }
   }
 
-  void _showSubOptions(String actionName, String equipo, List<String> opciones) {
+  void _showSubOptions(String actionName, String equipo, List<String> opciones, {List<String>? labels}) {
+    final nombreEquipo = equipo == 'Local' ? AppConstants.clubLocalName : (_partido?.equipoVisitante ?? 'Rival');
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('$actionName - $equipo'),
+        title: Text('$actionName - $nombreEquipo'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: opciones.map((op) => ListTile(
-            title: Text(op),
-            onTap: () {
-              Navigator.pop(ctx);
-              _registrarAccion(actionName, equipo, op);
-            },
-          )).toList(),
+          children: List.generate(opciones.length, (i) {
+            final op = opciones[i];
+            final label = labels != null && i < labels.length ? labels[i] : op;
+            return ListTile(
+              title: Text(label),
+              onTap: () {
+                Navigator.pop(ctx);
+                _registrarAccion(actionName, equipo, op);
+              },
+            );
+          }),
         ),
       )
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/partido.dart';
 import 'services/pdf_generator.dart';
+import 'services/calculadora_estadisticas.dart';
 
 class ReporteFinalPage extends StatefulWidget {
   final Partido partido;
@@ -25,24 +26,9 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
   late String _condicionFinal;
   late String _fechaActual;
 
-  // Formaciones
-  late Map<String, dynamic> _scrum;
-  late Map<String, dynamic> _line;
-  late Map<String, dynamic> _maul;
-  late Map<String, dynamic> _salida;
-  
-  // Defensa
-  late Map<String, dynamic> _tackles;
-  
-  // Puntos
-  late int _tries;
-  
-  // Disciplina
-  late int _errores;
-  late int _tarjetas;
-  late int _penales;
-
-  late String _miEquipo;
+  // Estadísticas centralizadas
+  late EstadisticasPartido _stats;
+  late EstadisticasPartido _statsRival;
 
   @override
   void initState() {
@@ -65,65 +51,17 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
     final now = DateTime.now();
     _fechaActual = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
 
-    // 2. Helpers de cálculo
-    _scrum = _calcularFormacion('Scrum');
-    _line = _calcularFormacion('Line');
-    _maul = _calcularFormacion('Maul');
-    _salida = _calcularFormacion('Salida');
-    
-    _tackles = _calcularTackles();
-    
-    _tries = _contarAccion('Try');
-    _errores = _contarAccion('Error No Forzado');
-    _tarjetas = _contarAccion('Tarjeta');
-    _penales = _contarAccion('Penales Cometidos');
-  }
-
-  Map<String, dynamic> _calcularFormacion(String nombre) {
-    int? idAccion = widget.tiposAccion[nombre];
-    if (idAccion == null) return {'total': 0, 'ganados': 0, 'porcentaje': 0, 'alerta': 'Sin datos'};
-
-    final filtradas = widget.acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local');
-    int total = filtradas.length;
-    int ganados = filtradas.where((a) => a['Resultado_Accion'] == 'Ganada').length;
-    
-    int porcentaje = total == 0 ? 0 : ((ganados / total) * 100).round();
-    return {
-      'total': total, 
-      'ganados': ganados, 
-      'porcentaje': porcentaje,
-      'alerta': _obtenerAlertaTextual(porcentaje, total)
-    };
-  }
-
-  Map<String, dynamic> _calcularTackles() {
-    int? idAccion = widget.tiposAccion['Tackle'];
-    if (idAccion == null) return {'total': 0, 'ganados': 0, 'porcentaje': 0, 'alerta': 'Sin datos'};
-
-    final filtradas = widget.acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local');
-    int total = filtradas.length;
-    int ganados = filtradas.where((a) => a['Resultado_Accion'] == 'Positivo').length;
-    
-    int porcentaje = total == 0 ? 0 : ((ganados / total) * 100).round();
-    return {
-      'total': total, 
-      'ganados': ganados, 
-      'porcentaje': porcentaje,
-      'alerta': _obtenerAlertaTextual(porcentaje, total)
-    };
-  }
-
-  int _contarAccion(String nombre) {
-    int? idAccion = widget.tiposAccion[nombre];
-    if (idAccion == null) return 0;
-    return widget.acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local').length;
-  }
-
-  String _obtenerAlertaTextual(int porcentaje, int total) {
-    if (total == 0) return 'Sin datos';
-    if (porcentaje < 50) return 'Necesita mejorar';
-    if (porcentaje <= 80) return 'Estable';
-    return 'Excelente';
+    // 2. Cálculo centralizado
+    _stats = CalculadoraEstadisticas.calcular(
+      acciones: widget.acciones,
+      tiposAccion: widget.tiposAccion,
+      equipo: 'Local',
+    );
+    _statsRival = CalculadoraEstadisticas.calcular(
+      acciones: widget.acciones,
+      tiposAccion: widget.tiposAccion,
+      equipo: 'Visitante',
+    );
   }
 
   @override
@@ -188,33 +126,74 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
             ),
 
             const SizedBox(height: 24),
-            const Text('ANÁLISIS DE RENDIMIENTO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            const Text('RENDIMIENTO DE ALMA JUNIORS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
             const SizedBox(height: 16),
 
             // Formaciones
             const Text('EFECTIVIDAD EN FORMACIONES FIJAS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
             const SizedBox(height: 8),
-            _buildStatCard('Scrum', _scrum),
-            _buildStatCard('Line', _line),
-            _buildStatCard('Maul', _maul),
-            _buildStatCard('Salida', _salida),
+            _buildFormacionCard('Scrum', _stats.scrum),
+            _buildFormacionCard('Line', _stats.line),
+            _buildFormacionCard('Maul', _stats.maul),
+            _buildFormacionCard('Salida', _stats.salida),
             
             const SizedBox(height: 16),
-            const Text('DEFENSA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+            const Text('DEFENSA Y PATEO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
             const SizedBox(height: 8),
-            _buildStatCard('Tackles Efectivos', _tackles),
+            _buildStatCard('Tackles Efectivos', _stats.tackles.toMap()),
+            _buildStatCard('Efectividad en Patadas', _stats.patadas.toMap()),
+            if (_stats.patadas.total > 0)
+              Padding(
+                padding: const EdgeInsets.only(left: 8, bottom: 8),
+                child: Text(
+                  'Conversiones: ${_stats.patadas.conversiones} | Penales a los palos: ${_stats.patadas.penalesPalos} | Erradas: ${_stats.patadas.erradas}',
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ),
 
             const SizedBox(height: 16),
             const Text('PUNTOS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
             const SizedBox(height: 8),
-            _buildSimpleCard('Tries Convertidos', _tries),
+            _buildSimpleCard('Tries Anotados', _stats.tries),
 
             const SizedBox(height: 16),
             const Text('DISCIPLINA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
             const SizedBox(height: 8),
-            _buildSimpleCard('Errores No Forzados', _errores),
-            _buildSimpleCard('Tarjetas', _tarjetas),
-            _buildSimpleCard('Penales Cometidos', _penales),
+            _buildSimpleCard('Errores No Forzados', _stats.erroresNoForzados),
+            _buildPenalesCard(_stats.penales),
+            _buildTarjetasCard(_stats.tarjetas),
+
+            // SECCIÓN RIVAL
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 8),
+            Text('RENDIMIENTO DEL RIVAL (${widget.partido.equipoVisitante.toUpperCase()})', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            const SizedBox(height: 16),
+
+            const Text('DEFENSA Y PATEO DEL RIVAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+            const SizedBox(height: 8),
+            _buildStatCard('Tackles Efectivos', _statsRival.tackles.toMap()),
+            _buildStatCard('Efectividad en Patadas', _statsRival.patadas.toMap()),
+            if (_statsRival.patadas.total > 0)
+              Padding(
+                padding: const EdgeInsets.only(left: 8, bottom: 8),
+                child: Text(
+                  'Conversiones: ${_statsRival.patadas.conversiones} | Penales a los palos: ${_statsRival.patadas.penalesPalos} | Erradas: ${_statsRival.patadas.erradas}',
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+              ),
+
+            const SizedBox(height: 16),
+            const Text('PUNTOS DEL RIVAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+            const SizedBox(height: 8),
+            _buildSimpleCard('Tries Anotados', _statsRival.tries),
+
+            const SizedBox(height: 16),
+            const Text('DISCIPLINA DEL RIVAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+            const SizedBox(height: 8),
+            _buildSimpleCard('Errores No Forzados', _statsRival.erroresNoForzados),
+            _buildPenalesCard(_statsRival.penales),
+            _buildTarjetasCard(_statsRival.tarjetas),
 
             const SizedBox(height: 32),
             ElevatedButton.icon(
@@ -234,16 +213,8 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
                     resultado: _condicionFinal,
                     puntosLocal: widget.partido.puntosLocal,
                     puntosVisitante: widget.partido.puntosVisitante,
-                    scrum: _scrum,
-                    line: _line,
-                    maul: _maul,
-                    salida: _salida,
-                    tackles: _tackles,
-                    tries: _tries,
-                    errores: _errores,
-                    tarjetasAmarillas: _tarjetas, // simplificado por ahora
-                    tarjetasRojas: 0,
-                    penales: _penales,
+                    estadisticas: _stats,
+                    estadisticasRival: _statsRival,
                   );
                 } catch (e) {
                   debugPrint('Error generando PDF: $e');
@@ -297,7 +268,7 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
           SizedBox(
             width: 90,
             child: Text(
-              stat['alerta'], 
+              stat['alerta'] ?? '', 
               style: const TextStyle(color: Colors.grey, fontSize: 11),
               textAlign: TextAlign.right,
             )
@@ -324,5 +295,168 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildPenalesCard(PenalesStat penales) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Penales Cometidos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text('${penales.total}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            ],
+          ),
+          if (penales.total > 0) ...[
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: penales.detalle.entries.map((e) {
+                return Text(
+                  '${e.key}: ${e.value}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: e.value > 0 ? Colors.black87 : Colors.grey,
+                    fontWeight: e.value > 0 ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTarjetasCard(TarjetasStat tarjetas) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text('Tarjetas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Row(
+            children: [
+              Text('🟨 ${tarjetas.amarillas}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const SizedBox(width: 12),
+              Text('🟥 ${tarjetas.rojas}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFormacionCard(String label, FormacionStat stat) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.sports_rugby, size: 16, color: Colors.blueGrey[700]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+              if (stat.alerta.isNotEmpty && stat.alerta != 'Sin datos')
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: stat.porcentaje >= 80
+                        ? Colors.green[50]
+                        : (stat.porcentaje >= 50 ? Colors.orange[50] : Colors.red[50]),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    stat.alerta,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: stat.porcentaje >= 80
+                          ? Colors.green[800]
+                          : (stat.porcentaje >= 50 ? Colors.orange[800] : Colors.red[800]),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Fila 1: Obtención propia
+          Row(
+            children: [
+              const SizedBox(width: 24),
+              const Expanded(
+                child: Text('Obtención propia', style: TextStyle(fontSize: 12, color: Colors.black87)),
+              ),
+              Text('${stat.ganados}/${stat.total}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              const SizedBox(width: 8),
+              Text(
+                '${stat.porcentaje}%',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: _getMetricColor(stat.porcentaje),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // Fila 2: Robadas al rival
+          Row(
+            children: [
+              const SizedBox(width: 24),
+              const Expanded(
+                child: Text('Robadas al rival', style: TextStyle(fontSize: 12, color: Colors.black87)),
+              ),
+              Text('${stat.rivalRobados}/${stat.rivalTotal}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              const SizedBox(width: 8),
+              Text(
+                '${stat.rivalPorcentaje}%',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: _getMetricColor(stat.rivalPorcentaje),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getMetricColor(int porcentaje) {
+    if (porcentaje >= 80) return Colors.green[700]!;
+    if (porcentaje >= 50) return Colors.orange[700]!;
+    return Colors.red[700]!;
   }
 }
