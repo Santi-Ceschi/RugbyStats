@@ -8,6 +8,7 @@ class PartidoCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback? onPlay;
   final VoidCallback? onTap;
+  final VoidCallback? onEditMetadatos;
 
   const PartidoCard({
     super.key,
@@ -16,6 +17,7 @@ class PartidoCard extends StatelessWidget {
     required this.onDelete,
     this.onPlay,
     this.onTap,
+    this.onEditMetadatos,
   });
 
   @override
@@ -68,7 +70,44 @@ class PartidoCard extends StatelessWidget {
               icon: const Icon(Icons.play_circle_fill, color: Colors.green, size: 28),
               onPressed: onPlay,
             ),
-          IconButton(icon: const Icon(Icons.edit_outlined, size: 20), onPressed: onEdit),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            tooltip: 'Opciones de edición',
+            onSelected: (value) {
+              if (value == 'metadatos') {
+                if (onEditMetadatos != null) {
+                  onEditMetadatos!();
+                } else {
+                  onEdit();
+                }
+              } else if (value == 'estadisticas') {
+                onEdit();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'metadatos',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_note, size: 18),
+                    SizedBox(width: 8),
+                    Text('Editar datos del partido', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+              if (partido.estadoPartido == 'Finalizado')
+                const PopupMenuItem(
+                  value: 'estadisticas',
+                  child: Row(
+                    children: [
+                      Icon(Icons.sports_score, size: 18),
+                      SizedBox(width: 8),
+                      Text('Editar acciones / estadísticas', style: TextStyle(fontSize: 13)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
           IconButton(icon: const Icon(Icons.delete_outline, size: 20), onPressed: onDelete),
         ],
       ),

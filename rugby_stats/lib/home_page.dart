@@ -4,24 +4,29 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'models/partido.dart';
+import 'models/usuario.dart';
 import 'widgets/partido_card.dart';
 import 'widgets/panel_filtrado.dart';
 import 'services/database_helper.dart';
 import 'widgets/dialog_nuevo_partido.dart';
+import 'widgets/dialog_editar_partido.dart';
 import 'match_page.dart';
 import 'match_edit_page.dart';
 import 'reporte_final_page.dart';
+import 'perfil_page.dart';
 import 'utils/app_constants.dart';
 import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final Usuario? usuarioActivo;
+  const HomePage({super.key, this.usuarioActivo});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  Usuario? _usuarioActivo;
   String? _selectedDivision;
   DateTimeRange? _filtroRangoFechas;
 
@@ -33,6 +38,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _usuarioActivo = widget.usuarioActivo;
     _cargarPartidos();
   }
 
@@ -140,6 +146,25 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.person_outline, color: Colors.black54),
+            tooltip: 'Mi Perfil',
+            onPressed: () async {
+              if (_usuarioActivo != null) {
+                final usuarioActualizado = await Navigator.push<Usuario>(
+                  context,
+                  MaterialPageRoute(builder: (_) => PerfilPage(usuario: _usuarioActivo!)),
+                );
+                if (usuarioActualizado != null) {
+                  setState(() => _usuarioActivo = usuarioActualizado);
+                }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No hay sesión de usuario activa.')),
+                );
+              }
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.logout, color: Colors.black54),
             tooltip: 'Cerrar sesión',
             onPressed: () {
@@ -244,6 +269,17 @@ class _HomePageState extends State<HomePage> {
                           );
                           _cargarPartidos();
                         },
+                        onEditMetadatos: () async {
+                          final p = _partidos[index];
+                          final result = await showDialog<bool>(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => DialogEditarPartido(partido: p),
+                          );
+                          if (result == true) {
+                            _cargarPartidos();
+                          }
+                        },
                         onEdit: () async {
                           final p = _partidos[index];
                           if (p.estadoPartido != 'Finalizado') {
@@ -333,7 +369,7 @@ class _HomePageState extends State<HomePage> {
               final nuevoPartidoId = await showDialog<int>(
                 context: context,
                 barrierDismissible: false,
-                builder: (context) => const DialogNuevoPartido(),
+                builder: (context) => DialogNuevoPartido(idUsuario: _usuarioActivo?.id),
               );
 
               if (nuevoPartidoId != null) {

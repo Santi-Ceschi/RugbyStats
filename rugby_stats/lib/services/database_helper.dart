@@ -415,6 +415,47 @@ class DatabaseHelper {
     await db.update('PARTIDO', {'Estado_partido': 'Finalizado'}, where: 'Id_Partido = ?', whereArgs: [idPartido]);
   }
 
+  Future<int> updatePartidoMetadatos({
+    required int idPartido,
+    required String equipoVisitante,
+    required String division,
+    required String torneo,
+    required bool somosLocal,
+  }) async {
+    final db = await instance.database;
+    return await db.update(
+      'PARTIDO',
+      {
+        'Equipo_Visitante': equipoVisitante,
+        'Division': division,
+        'Torneo': torneo,
+        'Somos_Local': somosLocal ? 1 : 0,
+      },
+      where: 'Id_Partido = ?',
+      whereArgs: [idPartido],
+    );
+  }
+
+  Future<int> updateUsuario(Usuario usuario, {bool actualizarPassword = false}) async {
+    final db = await instance.database;
+    Map<String, dynamic> data = {
+      'Nombre_Usuario': usuario.nombre,
+      'Email': usuario.email,
+      'Telefono': usuario.telefono,
+    };
+    if (actualizarPassword && usuario.contrasena.isNotEmpty) {
+      final bytes = utf8.encode(usuario.contrasena);
+      final digest = sha256.convert(bytes);
+      data['Contrasena'] = digest.toString();
+    }
+    return await db.update(
+      'Usuario',
+      data,
+      where: 'IdUsuario = ?',
+      whereArgs: [usuario.id],
+    );
+  }
+
   Future<void> undoUltimaAccion(int idPartido) async {
     final db = await instance.database;
     final List<Map<String, dynamic>> results = await db.query(

@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'register_page.dart';
 import 'home_page.dart';
 import 'services/database_helper.dart';
+import 'models/usuario.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -34,11 +35,12 @@ class _LoginPageState extends State<LoginPage> {
       final result = await DatabaseHelper.instance.login(email, password);
 
       if (result['success'] == true) {
-        // Login exitoso, navegamos a la pantalla principal
+        // Login exitoso, navegamos a la pantalla principal pasando el usuario autenticado
+        final Usuario usuario = result['user'];
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
+            MaterialPageRoute(builder: (context) => HomePage(usuarioActivo: usuario)),
           );
         }
       } else {
