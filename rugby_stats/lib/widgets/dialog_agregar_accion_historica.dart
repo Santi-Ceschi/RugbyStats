@@ -29,8 +29,8 @@ class _DialogAgregarAccionHistoricaState extends State<DialogAgregarAccionHistor
     super.initState();
     _cargarTiposAccion();
     
-    final localValido = widget.partido.equipoLocal != null && widget.partido.equipoLocal!.isNotEmpty;
-    final visitaValido = widget.partido.equipoVisitante != null && widget.partido.equipoVisitante!.isNotEmpty;
+    final localValido = widget.partido.equipoLocal.isNotEmpty;
+    final visitaValido = widget.partido.equipoVisitante.isNotEmpty;
     
     if (localValido) {
       _equipoSeleccionado = widget.partido.equipoLocal;
@@ -39,13 +39,21 @@ class _DialogAgregarAccionHistoricaState extends State<DialogAgregarAccionHistor
     }
   }
 
+  List<Map<String, dynamic>> get _tiposDisponibles {
+    if (_equipoSeleccionado == widget.partido.equipoVisitante) {
+      return _tiposAccion.where((ta) => !['Tackle', 'Error No Forzado', 'Penales Cometidos', 'Tarjeta'].contains(ta['Nombre'])).toList();
+    }
+    return _tiposAccion;
+  }
+
   Future<void> _cargarTiposAccion() async {
     final tipos = await DatabaseHelper.instance.getTiposAccion();
     setState(() {
       _tiposAccion = tipos;
-      if (tipos.isNotEmpty) {
-        _idTipoAccionSeleccionada = tipos.first['Id_Tipo_Accion'];
-        _nombreTipoAccion = tipos.first['Nombre'];
+      final disponibles = _tiposDisponibles;
+      if (disponibles.isNotEmpty) {
+        _idTipoAccionSeleccionada = disponibles.first['Id_Tipo_Accion'];
+        _nombreTipoAccion = disponibles.first['Nombre'];
         _opcionesResultado = ReglasRugby.getSubOptions(_nombreTipoAccion);
         _resultadoSeleccionado = _opcionesResultado.isNotEmpty ? _opcionesResultado.first : null;
       }
@@ -101,11 +109,11 @@ class _DialogAgregarAccionHistoricaState extends State<DialogAgregarAccionHistor
   @override
   Widget build(BuildContext context) {
     final List<DropdownMenuItem<String>> equipoItems = [];
-    if (widget.partido.equipoLocal != null && widget.partido.equipoLocal!.isNotEmpty) {
-      equipoItems.add(DropdownMenuItem(value: widget.partido.equipoLocal, child: Text(widget.partido.equipoLocal!)));
+    if (widget.partido.equipoLocal.isNotEmpty) {
+      equipoItems.add(DropdownMenuItem(value: widget.partido.equipoLocal, child: Text(widget.partido.equipoLocal)));
     }
-    if (widget.partido.equipoVisitante != null && widget.partido.equipoVisitante!.isNotEmpty) {
-      equipoItems.add(DropdownMenuItem(value: widget.partido.equipoVisitante, child: Text(widget.partido.equipoVisitante!)));
+    if (widget.partido.equipoVisitante.isNotEmpty) {
+      equipoItems.add(DropdownMenuItem(value: widget.partido.equipoVisitante, child: Text(widget.partido.equipoVisitante)));
     }
 
     return AlertDialog(
@@ -125,7 +133,20 @@ class _DialogAgregarAccionHistoricaState extends State<DialogAgregarAccionHistor
                 isExpanded: true,
                 value: _equipoSeleccionado,
                 items: equipoItems,
-                onChanged: (val) => setState(() => _equipoSeleccionado = val),
+                onChanged: (val) {
+                  setState(() {
+                    _equipoSeleccionado = val;
+                    final disponibles = _tiposDisponibles;
+                    if (!disponibles.any((ta) => ta['Id_Tipo_Accion'] == _idTipoAccionSeleccionada)) {
+                      if (disponibles.isNotEmpty) {
+                        _idTipoAccionSeleccionada = disponibles.first['Id_Tipo_Accion'];
+                        _nombreTipoAccion = disponibles.first['Nombre'];
+                        _opcionesResultado = ReglasRugby.getSubOptions(_nombreTipoAccion);
+                        _resultadoSeleccionado = _opcionesResultado.isNotEmpty ? _opcionesResultado.first : null;
+                      }
+                    }
+                  });
+                },
               ),
               
             const SizedBox(height: 16),
@@ -135,7 +156,7 @@ class _DialogAgregarAccionHistoricaState extends State<DialogAgregarAccionHistor
             else DropdownButton<int>(
               isExpanded: true,
               value: _idTipoAccionSeleccionada,
-              items: _tiposAccion.map((ta) {
+              items: _tiposDisponibles.map((ta) {
                 return DropdownMenuItem<int>(
                   value: ta['Id_Tipo_Accion'],
                   child: Text(ta['Nombre']),
@@ -145,7 +166,7 @@ class _DialogAgregarAccionHistoricaState extends State<DialogAgregarAccionHistor
                 if (val != null) {
                   setState(() {
                     _idTipoAccionSeleccionada = val;
-                    _nombreTipoAccion = _tiposAccion.firstWhere((e) => e['Id_Tipo_Accion'] == val)['Nombre'];
+                    _nombreTipoAccion = _tiposDisponibles.firstWhere((e) => e['Id_Tipo_Accion'] == val)['Nombre'];
                     _opcionesResultado = ReglasRugby.getSubOptions(_nombreTipoAccion);
                     _resultadoSeleccionado = _opcionesResultado.isNotEmpty ? _opcionesResultado.first : null;
                   });
