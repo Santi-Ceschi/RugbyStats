@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/calculadora_estadisticas.dart';
 
 class DialogEstadisticasEnVivo extends StatelessWidget {
   final List<Map<String, dynamic>> acciones;
@@ -14,64 +15,11 @@ class DialogEstadisticasEnVivo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Helper para obtener datos de una formación fija (Scrum, Line, Maul, Salida)
-    Map<String, dynamic> _getFormacion(String nombreAccion) {
-      int? idAccion = tiposAccion[nombreAccion];
-      if (idAccion == null) return {'total': 0, 'ganados': 0, 'porcentaje': 0};
-
-      final accionesLocal = acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local');
-      final total = accionesLocal.length;
-      final ganados = accionesLocal.where((a) => a['Resultado_Accion'] == 'Ganada').length;
-      
-      final porcentaje = total == 0 ? 0 : ((ganados / total) * 100).round();
-      return {'total': total, 'ganados': ganados, 'porcentaje': porcentaje};
-    }
-
-    // Helper para Tackles Efectivos
-    Map<String, dynamic> _getTackles() {
-      int? idAccion = tiposAccion['Tackle'];
-      if (idAccion == null) return {'total': 0, 'positivos': 0, 'porcentaje': 0};
-
-      final accionesLocal = acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local');
-      final total = accionesLocal.length;
-      final positivos = accionesLocal.where((a) => a['Resultado_Accion'] == 'Positivo').length;
-      
-      final porcentaje = total == 0 ? 0 : ((positivos / total) * 100).round();
-      return {'total': total, 'positivos': positivos, 'porcentaje': porcentaje};
-    }
-
-    // Helper para Patadas y Penales a los palos convertidos
-    Map<String, dynamic> _getConversiones() {
-      int? idAccion = tiposAccion['Patada'];
-      if (idAccion == null) return {'total': 0, 'convertidos': 0, 'porcentaje': 0};
-
-      final accionesLocal = acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local');
-      final total = accionesLocal.length; // Suma Conversión + Penal a los Palos + Errada
-      final convertidos = accionesLocal.where((a) => 
-        a['Resultado_Accion'] == 'Conversión' || a['Resultado_Accion'] == 'Penal a los Palos'
-      ).length;
-      
-      final porcentaje = total == 0 ? 0 : ((convertidos / total) * 100).round();
-      return {'total': total, 'convertidos': convertidos, 'porcentaje': porcentaje};
-    }
-
-    // Helper para conteos simples (Tries, Errores no forzados)
-    int _getCount(String nombreAccion) {
-      int? idAccion = tiposAccion[nombreAccion];
-      if (idAccion == null) return 0;
-      return acciones.where((a) => a['Id_Tipo_Accion'] == idAccion && a['Equipo_Accion'] == 'Local').length;
-    }
-
-    final sScrum = _getFormacion('Scrum');
-    final sLine = _getFormacion('Line');
-    final sMaul = _getFormacion('Maul');
-    final sSalida = _getFormacion('Salida');
-    
-    final sTackles = _getTackles();
-    final sConversiones = _getConversiones();
-    
-    final tTries = _getCount('Try');
-    final tErrores = _getCount('Error No Forzado');
+    final stats = CalculadoraEstadisticas.calcular(
+      acciones: acciones,
+      tiposAccion: tiposAccion,
+      equipo: 'Local',
+    );
 
     Widget _buildStatRow(String label, Map<String, dynamic> stat, String valKey) {
       return Padding(
@@ -152,28 +100,58 @@ class DialogEstadisticasEnVivo extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionTitle('EFECTIVIDAD'),
-                    _buildStatRow('Scrum', sScrum, 'ganados'),
+                    _buildSectionTitle('EFECTIVIDAD EN FORMACIONES'),
+                    _buildStatRow('Scrum', stats.scrum.toMap(), 'ganados'),
                     const Divider(height: 1),
-                    _buildStatRow('Line', sLine, 'ganados'),
+                    _buildStatRow('Line', stats.line.toMap(), 'ganados'),
                     const Divider(height: 1),
-                    _buildStatRow('Maul', sMaul, 'ganados'),
+                    _buildStatRow('Maul', stats.maul.toMap(), 'ganados'),
                     const Divider(height: 1),
-                    _buildStatRow('Salida', sSalida, 'ganados'),
+                    _buildStatRow('Salida', stats.salida.toMap(), 'ganados'),
                     const Divider(height: 1),
 
                     _buildSectionTitle('DEFENSA Y PATEO'),
-                    _buildStatRow('Tackles Efectivos', sTackles, 'positivos'),
+                    _buildStatRow('Tackles Efectivos', stats.tackles.toMap(), 'ganados'),
                     const Divider(height: 1),
-                    _buildStatRow('Conversiones (Patadas + Penales)', sConversiones, 'convertidos'),
+                    _buildStatRow('Efectividad en Patadas', stats.patadas.toMap(), 'convertidos'),
+                    if (stats.patadas.total > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Conversiones: ${stats.patadas.conversiones} | Penales: ${stats.patadas.penalesPalos} | Erradas: ${stats.patadas.erradas}',
+                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                        ),
+                      ),
                     const Divider(height: 1),
 
                     _buildSectionTitle('PUNTOS'),
-                    _buildSimpleRow('Tries', tTries),
+                    _buildSimpleRow('Tries Anotados', stats.tries),
                     const Divider(height: 1),
 
                     _buildSectionTitle('DISCIPLINA'),
-                    _buildSimpleRow('Errores No Forzados', tErrores),
+                    _buildSimpleRow('Errores No Forzados', stats.erroresNoForzados),
+                    const Divider(height: 1),
+                    _buildSimpleRow('Penales Cometidos', stats.penales.total),
+                    if (stats.penales.total > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 4,
+                          children: stats.penales.detalle.entries.map((e) {
+                            return Text(
+                              '${e.key}: ${e.value}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: e.value > 0 ? Colors.black87 : Colors.grey,
+                                fontWeight: e.value > 0 ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    const Divider(height: 1),
+                    _buildSimpleRow('Tarjetas (🟨 ${stats.tarjetas.amarillas} / 🟥 ${stats.tarjetas.rojas})', stats.tarjetas.total),
                   ],
                 ),
               ),

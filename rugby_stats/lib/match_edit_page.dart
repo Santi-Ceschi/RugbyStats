@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'models/partido.dart';
-import 'models/accion.dart';
 import 'services/database_helper.dart';
 import 'widgets/dialog_agregar_accion_historica.dart';
+import 'reporte_final_page.dart';
 
 class MatchEditPage extends StatefulWidget {
   final Partido partido;
@@ -91,6 +91,31 @@ class _MatchEditPageState extends State<MatchEditPage> {
         title: const Text('Editor de Partido', style: TextStyle(color: Colors.white, fontSize: 16)),
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.assessment_outlined),
+            tooltip: 'Ver Estadísticas y PDF',
+            onPressed: () async {
+              final acciones = await DatabaseHelper.instance.getAccionesByPartido(_partido.idPartido!);
+              final tipos = await DatabaseHelper.instance.getTiposAccion();
+              final tiposMap = { for (var t in tipos) t['Nombre'] as String : t['Id_Tipo_Accion'] as int };
+              if (context.mounted) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ReporteFinalPage(
+                      partido: _partido,
+                      acciones: acciones,
+                      tiposAccion: tiposMap,
+                      duracionTotal: _partido.horaInicio ?? '80m',
+                    ),
+                  ),
+                );
+                _cargarDatos();
+              }
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

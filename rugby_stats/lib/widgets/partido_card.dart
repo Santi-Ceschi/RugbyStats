@@ -7,6 +7,7 @@ class PartidoCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback? onPlay;
+  final VoidCallback? onTap;
 
   const PartidoCard({
     super.key,
@@ -14,18 +15,22 @@ class PartidoCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     this.onPlay,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
       child: Row(
         children: [
           // Franja de color
@@ -67,6 +72,6 @@ class PartidoCard extends StatelessWidget {
           IconButton(icon: const Icon(Icons.delete_outline, size: 20), onPressed: onDelete),
         ],
       ),
-    );
+    ));
   }
 }
