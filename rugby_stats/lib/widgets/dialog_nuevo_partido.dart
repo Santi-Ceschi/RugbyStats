@@ -4,7 +4,8 @@ import '../services/database_helper.dart';
 import '../utils/app_constants.dart';
 
 class DialogNuevoPartido extends StatefulWidget {
-  const DialogNuevoPartido({super.key});
+  final int? idUsuario;
+  const DialogNuevoPartido({super.key, this.idUsuario});
 
   @override
   State<DialogNuevoPartido> createState() => _DialogNuevoPartidoState();
@@ -110,6 +111,7 @@ class _DialogNuevoPartidoState extends State<DialogNuevoPartido> {
       somosLocal: _somosLocales,
       categoria: cat,
       resultado: 'Empate', // Inicial
+      idUsuario: widget.idUsuario,
     );
 
     // Insertar en BD y recuperar ID autogenerado

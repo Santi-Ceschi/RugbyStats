@@ -126,9 +126,16 @@ class PdfGenerator {
             pw.Text('RENDIMIENTO DEL RIVAL', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800)),
             pw.SizedBox(height: 8),
 
-            pw.Text('DEFENSA Y PATEO DEL RIVAL', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+            pw.Text('PUNTOS DEL RIVAL', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 4),
-            _buildProgressBarStat('Tackles efectivos', estadisticasRival.tackles.toMap()),
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(left: 10, bottom: 2),
+              child: pw.Text('Tries: ${estadisticasRival.tries} ($totalPuntosRival puntos)', style: const pw.TextStyle(fontSize: 10)),
+            ),
+            pw.SizedBox(height: 8),
+
+            pw.Text('PATEO DEL RIVAL', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 4),
             _buildProgressBarStat('Efectividad en patadas', estadisticasRival.patadas.toMap()),
             if (estadisticasRival.patadas.total > 0)
               pw.Padding(
@@ -138,27 +145,6 @@ class PdfGenerator {
                   style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
                 ),
               ),
-            pw.SizedBox(height: 8),
-
-            pw.Text('PUNTOS DEL RIVAL', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 4),
-            pw.Padding(
-              padding: const pw.EdgeInsets.only(left: 10, bottom: 2),
-              child: pw.Text('Tries: ${estadisticasRival.tries} ($totalPuntosRival puntos)', style: const pw.TextStyle(fontSize: 10)),
-            ),
-            pw.SizedBox(height: 8),
-
-            pw.Text('DISCIPLINA DEL RIVAL', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 4),
-            _buildSimpleLine('Errores no forzados:', estadisticasRival.erroresNoForzados.toString()),
-            _buildSimpleLine('Penales cometidos:', estadisticasRival.penales.total.toString()),
-            _buildIndentedLine('- Inconducta: ${estadisticasRival.penales.detalle['Inconducta'] ?? 0}'),
-            _buildIndentedLine('- Offside: ${estadisticasRival.penales.detalle['Offside'] ?? 0}'),
-            _buildIndentedLine('- Ruck: ${estadisticasRival.penales.detalle['Ruck'] ?? 0}'),
-            _buildIndentedLine('- Scrum: ${estadisticasRival.penales.detalle['Scrum'] ?? 0}'),
-            _buildIndentedLine('- Otro: ${estadisticasRival.penales.detalle['Otro'] ?? 0}'),
-            _buildSimpleLine('Tarjetas amarillas:', estadisticasRival.tarjetas.amarillas.toString()),
-            _buildSimpleLine('Tarjetas rojas:', estadisticasRival.tarjetas.rojas.toString()),
 
             pw.SizedBox(height: 16),
             pw.Center(
@@ -230,8 +216,8 @@ class PdfGenerator {
         children: [
           pw.Text(label, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
           pw.SizedBox(height: 2),
-          _buildSubBar('Obtención propia', stat.ganados, stat.total, stat.porcentaje),
-          _buildSubBar('Robadas al rival', stat.rivalRobados, stat.rivalTotal, stat.rivalPorcentaje),
+          _buildSubBar('$label de Alma', stat.ganados, stat.total, stat.porcentaje),
+          _buildSubBar('$label del Rival', stat.rivalRobados, stat.rivalTotal, stat.rivalPorcentaje),
         ],
       ),
     );
@@ -243,7 +229,7 @@ class PdfGenerator {
       child: pw.Row(
         children: [
           pw.Container(
-            width: 130,
+            width: 145,
             child: pw.Text('$label ($ganados/$total)', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
           ),
           pw.SizedBox(width: 8),

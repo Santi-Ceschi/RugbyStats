@@ -8,6 +8,7 @@ class ReporteFinalPage extends StatefulWidget {
   final List<Map<String, dynamic>> acciones;
   final Map<String, int> tiposAccion;
   final String duracionTotal;
+  final bool esEnVivo;
 
   const ReporteFinalPage({
     super.key,
@@ -15,6 +16,7 @@ class ReporteFinalPage extends StatefulWidget {
     required this.acciones,
     required this.tiposAccion,
     required this.duracionTotal,
+    this.esEnVivo = false,
   });
 
   @override
@@ -78,7 +80,10 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('REPORTE FINAL', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            Text(
+              widget.esEnVivo ? 'ESTADÍSTICAS EN VIVO' : 'REPORTE FINAL',
+              style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+            ),
             Text(_fechaActual, style: const TextStyle(color: Colors.grey, fontSize: 12)),
           ],
         ),
@@ -99,7 +104,9 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
               child: Column(
                 children: [
                   Text(
-                    '${widget.partido.division.toUpperCase()} • $_condicionFinal',
+                    widget.esEnVivo 
+                      ? '${widget.partido.division.toUpperCase()} • EN VIVO'
+                      : '${widget.partido.division.toUpperCase()} • $_condicionFinal',
                     style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 1),
                   ),
                   const SizedBox(height: 12),
@@ -170,9 +177,13 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
             Text('RENDIMIENTO DEL RIVAL (${widget.partido.equipoVisitante.toUpperCase()})', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
             const SizedBox(height: 16),
 
-            const Text('DEFENSA Y PATEO DEL RIVAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+            const Text('PUNTOS DEL RIVAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
             const SizedBox(height: 8),
-            _buildStatCard('Tackles Efectivos', _statsRival.tackles.toMap()),
+            _buildSimpleCard('Tries Anotados', _statsRival.tries),
+
+            const SizedBox(height: 16),
+            const Text('PATEO DEL RIVAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+            const SizedBox(height: 8),
             _buildStatCard('Efectividad en Patadas', _statsRival.patadas.toMap()),
             if (_statsRival.patadas.total > 0)
               Padding(
@@ -183,63 +194,63 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
                 ),
               ),
 
-            const SizedBox(height: 16),
-            const Text('PUNTOS DEL RIVAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
-            const SizedBox(height: 8),
-            _buildSimpleCard('Tries Anotados', _statsRival.tries),
-
-            const SizedBox(height: 16),
-            const Text('DISCIPLINA DEL RIVAL', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
-            const SizedBox(height: 8),
-            _buildSimpleCard('Errores No Forzados', _statsRival.erroresNoForzados),
-            _buildPenalesCard(_statsRival.penales),
-            _buildTarjetasCard(_statsRival.tarjetas),
-
             const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () async {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generando PDF...')));
-                
-                String nombreOponente = widget.partido.equipoVisitante;
-                String txtCondicion = widget.partido.somosLocal ? 'Local' : 'Visitante';
+            if (!widget.esEnVivo) ...[
+              ElevatedButton.icon(
+                onPressed: () async {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generando PDF...')));
+                  
+                  String nombreOponente = widget.partido.equipoVisitante;
+                  String txtCondicion = widget.partido.somosLocal ? 'Local' : 'Visitante';
 
-                try {
-                  await PdfGenerator.generateAndSharePdf(
-                    fecha: _fechaActual,
-                    hora: '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
-                    division: widget.partido.division,
-                    oponente: '$nombreOponente ($txtCondicion)',
-                    duracion: widget.duracionTotal,
-                    resultado: _condicionFinal,
-                    puntosLocal: widget.partido.puntosLocal,
-                    puntosVisitante: widget.partido.puntosVisitante,
-                    estadisticas: _stats,
-                    estadisticasRival: _statsRival,
-                  );
-                } catch (e) {
-                  debugPrint('Error generando PDF: $e');
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al generar PDF'), backgroundColor: Colors.red));
+                  try {
+                    await PdfGenerator.generateAndSharePdf(
+                      fecha: _fechaActual,
+                      hora: '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
+                      division: widget.partido.division,
+                      oponente: '$nombreOponente ($txtCondicion)',
+                      duracion: widget.duracionTotal,
+                      resultado: _condicionFinal,
+                      puntosLocal: widget.partido.puntosLocal,
+                      puntosVisitante: widget.partido.puntosVisitante,
+                      estadisticas: _stats,
+                      estadisticasRival: _statsRival,
+                    );
+                  } catch (e) {
+                    debugPrint('Error generando PDF: $e');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al generar PDF'), backgroundColor: Colors.red));
+                    }
                   }
-                }
-              },
-              icon: const Icon(Icons.download),
-              label: const Text('DESCARGAR PDF', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                },
+                icon: const Icon(Icons.download),
+                label: const Text('DESCARGAR PDF', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                side: BorderSide(color: Colors.grey[300]!),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: Colors.grey[300]!),
+                ),
+                child: const Text('CERRAR', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, letterSpacing: 1)),
               ),
-              child: const Text('CERRAR', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, letterSpacing: 1)),
-            ),
+            ] else ...[
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text('CERRAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+              ),
+            ],
             const SizedBox(height: 24),
           ],
         ),
@@ -385,6 +396,8 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
                 child: Text(
                   label,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
               if (stat.alerta.isNotEmpty && stat.alerta != 'Sin datos')
@@ -410,13 +423,19 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
             ],
           ),
           const SizedBox(height: 8),
-          // Fila 1: Obtención propia
+          // Fila 1: Formación de Alma
           Row(
             children: [
               const SizedBox(width: 24),
-              const Expanded(
-                child: Text('Obtención propia', style: TextStyle(fontSize: 12, color: Colors.black87)),
+              Expanded(
+                child: Text(
+                  '$label de Alma', 
+                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
+              const SizedBox(width: 8),
               Text('${stat.ganados}/${stat.total}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
               const SizedBox(width: 8),
               Text(
@@ -430,13 +449,19 @@ class _ReporteFinalPageState extends State<ReporteFinalPage> {
             ],
           ),
           const SizedBox(height: 4),
-          // Fila 2: Robadas al rival
+          // Fila 2: Formación del Rival
           Row(
             children: [
               const SizedBox(width: 24),
-              const Expanded(
-                child: Text('Robadas al rival', style: TextStyle(fontSize: 12, color: Colors.black87)),
+              Expanded(
+                child: Text(
+                  '$label del Rival', 
+                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
+              const SizedBox(width: 8),
               Text('${stat.rivalRobados}/${stat.rivalTotal}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
               const SizedBox(width: 8),
               Text(

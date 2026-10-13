@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'models/partido.dart';
 import 'models/accion.dart';
 import 'services/database_helper.dart';
-import 'widgets/dialog_estadisticas_en_vivo.dart';
 import 'reporte_final_page.dart';
 import 'utils/app_constants.dart';
 
@@ -25,9 +24,13 @@ class _MatchPageState extends State<MatchPage> {
   bool _isPaused = true;
   DateTime? _horaPausa;
 
-  final List<String> _botonesIzquierda = [
+  final List<String> _botonesLocal = [
     'Try', 'Scrum', 'Line', 'Patada', 'Penales Cometidos',
     'Tackle', 'Maul', 'Salida', 'Error No Forzado', 'Tarjeta'
+  ];
+
+  final List<String> _botonesVisitante = [
+    'Try', 'Scrum', 'Line', 'Patada', 'Maul', 'Salida'
   ];
 
   @override
@@ -390,12 +393,17 @@ class _MatchPageState extends State<MatchPage> {
                   icon: const Icon(Icons.bar_chart),
                   label: const Text('ESTADÍSTICAS'),
                   onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => DialogEstadisticasEnVivo(
-                        acciones: _acciones,
-                        tiposAccion: _tiposAccion,
-                        nombreEquipoLocal: _partido?.equipoLocal ?? 'Equipo Local',
+                    if (_partido == null) return;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ReporteFinalPage(
+                          partido: _partido!,
+                          acciones: _acciones,
+                          tiposAccion: _tiposAccion,
+                          duracionTotal: _getTiempoDisplay(),
+                          esEnVivo: true,
+                        ),
                       ),
                     );
                   },
@@ -413,9 +421,9 @@ class _MatchPageState extends State<MatchPage> {
                 Expanded(
                   flex: 2,
                   child: ListView.builder(
-                    itemCount: _botonesIzquierda.length,
+                    itemCount: _botonesLocal.length,
                     itemBuilder: (ctx, i) {
-                      String btn = _botonesIzquierda[i];
+                      String btn = _botonesLocal[i];
                       return ListTile(
                         dense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -431,9 +439,9 @@ class _MatchPageState extends State<MatchPage> {
                 Expanded(
                   flex: 2,
                   child: ListView.builder(
-                    itemCount: _botonesIzquierda.length,
+                    itemCount: _botonesVisitante.length,
                     itemBuilder: (ctx, i) {
-                      String btn = _botonesIzquierda[i];
+                      String btn = _botonesVisitante[i];
                       return ListTile(
                         dense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),

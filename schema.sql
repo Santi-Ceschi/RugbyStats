@@ -1,4 +1,3 @@
-CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE Tipo_Accion (
 	Id_Tipo_Accion INTEGER PRIMARY KEY AUTOINCREMENT,
 	Nombre TEXT NOT NULL UNIQUE
@@ -7,7 +6,7 @@ CREATE TABLE Usuario (
 	IdUsuario INTEGER PRIMARY KEY AUTOINCREMENT,
 	Nombre_Usuario TEXT NOT NULL,
 	Contrasena TEXT,
-	Email TEXT,
+	Email TEXT UNIQUE,
 	Telefono TEXT
 );
 CREATE TABLE PARTIDO (
@@ -18,8 +17,11 @@ CREATE TABLE PARTIDO (
 	Estado_partido TEXT,
 	Torneo TEXT,
 	Puntos_local INTEGER DEFAULT 0,
-    Puntos_visitante INTEGER DEFAULT 0,
+	Puntos_visitante INTEGER DEFAULT 0,
 	Division TEXT,
+	Hora_Inicio TEXT,
+	Minutos_Ajuste INTEGER DEFAULT 0,
+	Somos_Local INTEGER DEFAULT 1,
 	Id_Usuario INTEGER REFERENCES Usuario(IdUsuario) ON DELETE SET NULL
 );
 CREATE TABLE Accion (
@@ -42,3 +44,4 @@ CREATE TABLE REPORTE (
 CREATE INDEX idx_accion_partido ON Accion(Id_Partido);
 CREATE INDEX idx_reporte_partido ON REPORTE(Id_Partido);
 CREATE INDEX idx_partido_usuario ON PARTIDO(Id_Usuario);
+
