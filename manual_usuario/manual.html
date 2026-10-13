@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RugbyStats — Manual de Usuario</title>
+  <style>
+    /* ===== FUENTES ===== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== PORTADA ===== */
+    .cover {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, transparent 70%);
+      animation: pulse 8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+
+    .cover-icon {
+      font-size: 80px;
+      margin-bottom: 30px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover h1 {
+      font-size: 64px;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -2px;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover .subtitle {
+      font-size: 22px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-bottom: 50px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover .version-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.8);
+      padding: 8px 24px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover .cover-footer {
+      position: absolute;
+      bottom: 40px;
+      color: rgba(255,255,255,0.3);
+      font-size: 13px;
+      letter-spacing: 1px;
+      z-index: 1;
+    }
+
+    /* ===== ÍNDICE ===== */
+    .toc {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 80px 40px;
+    }
+
+    .toc h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: #999;
+      margin-bottom: 40px;
+    }
+
+    .toc-list {
+      list-style: none;
+      counter-reset: toc-counter;
+    }
+
+    .toc-list li {
+      counter-increment: toc-counter;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .toc-list li a {
+      display: flex;
+      align-items: center;
+      padding: 18px 0;
+      text-decoration: none;
+      color: #1a1a1a;
+      transition: all 0.2s ease;
+    }
+
+    .toc-list li a:hover {
+      padding-left: 12px;
+      color: #000;
+    }
+
+    .toc-list li a::before {
+      content: counter(toc-counter, decimal-leading-zero);
+      font-size: 13px;
+      font-weight: 700;
+      color: #bbb;
+      margin-right: 20px;
+      min-width: 30px;
+    }
+
+    .toc-list li a .toc-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* ===== CONTENEDOR PRINCIPAL ===== */
+    .content {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 40px 100px;
+    }
+
+    /* ===== CAPÍTULOS ===== */
+    .chapter {
+      margin-bottom: 100px;
+      scroll-margin-top: 40px;
+    }
+
+    .chapter-header {
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #000;
+    }
+
+    .chapter-number {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: #999;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .chapter-title {
+      font-size: 36px;
+      font-weight: 800;
+      color: #000;
+      letter-spacing: -1px;
+      line-height: 1.2;
+    }
+
+    /* ===== TEXTO ===== */
+    .chapter p {
+      font-size: 16px;
+      color: #444;
+      margin-bottom: 20px;
+      line-height: 1.8;
+    }
+
+    .chapter strong {
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+
+    /* ===== PASOS ===== */
+    .steps {
+      list-style: none;
+      counter-reset: step-counter;
+      margin: 30px 0;
+    }
+
+    .steps li {
+      counter-increment: step-counter;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 20px 24px;
+      background: #fafafa;
+      border-radius: 12px;
+      border: 1px solid #eee;
+    }
+
+    .steps li::before {
+      content: counter(step-counter);
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      background: #000;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .steps li .step-content {
+      flex: 1;
+    }
+
+    .steps li .step-content strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+
+    .steps li .step-content span {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    /* ===== CAPTURAS ===== */
+    .screenshot-container {
+      margin: 30px 0;
+      text-align: center;
+    }
+
+    .screenshot-container img {
+      max-width: 300px;
+      width: 100%;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+    }
+
+    .screenshot-container .caption {
+      font-size: 13px;
+      color: #999;
+      margin-top: 16px;
+      font-style: italic;
+    }
+
+    /* Dos capturas lado a lado */
+    .screenshots-row {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 30px 0;
+    }
+
+    .screenshots-row .screenshot-container {
+      margin: 0;
+      flex: 1;
+      max-width: 280px;
+    }
+
+    .screenshots-row .screenshot-container img {
+      max-width: 100%;
+    }
+
+    /* ===== ALERTAS / TIPS ===== */
+    .tip {
+      padding: 20px 24px;
+      border-radius: 12px;
+      margin: 24px 0;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .tip-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .tip-content {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .tip-content strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .tip.info {
+      background: #f0f7ff;
+      border: 1px solid #d0e4ff;
+      color: #1a5276;
+    }
+
+    .tip.warning {
+      background: #fff8f0;
+      border: 1px solid #ffe0b3;
+      color: #7d5a29;
+    }
+
+    .tip.success {
+      background: #f0fff4;
+      border: 1px solid #b3e6c7;
+      color: #1a6b3c;
+    }
+
+    /* ===== SEPARADORES ===== */
+    .divider {
+      border: none;
+      border-top: 1px solid #e5e5e5;
+      margin: 60px 0;
+    }
+
+    /* ===== FOOTER ===== */
+    .manual-footer {
+      text-align: center;
+      padding: 60px 40px;
+      background: #0a0a0a;
+      color: rgba(255,255,255,0.4);
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    .manual-footer strong {
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* ===== PLACEHOLDER PARA CAPTURAS PENDIENTES ===== */
+    .screenshot-placeholder {
+      max-width: 300px;
+      margin: 30px auto;
+      height: 500px;
+      background: #f0f0f0;
+      border: 2px dashed #ccc;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .screenshot-placeholder .ph-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    /* ===== PRINT ===== */
+    @media print {
+      .cover { min-height: auto; padding: 100px 40px; page-break-after: always; }
+      .toc { page-break-after: always; }
+      .chapter { page-break-inside: avoid; }
+      body { background: #fff; }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .cover h1 { font-size: 40px; }
+      .cover .subtitle { font-size: 16px; letter-spacing: 3px; }
+      .chapter-title { font-size: 28px; }
+      .content { padding: 0 20px 60px; }
+      .toc { padding: 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PORTADA ==================== -->
+  <section class="cover">
+    <div class="cover-icon">🏉</div>
+    <h1>RugbyStats</h1>
+    <p class="subtitle">Manual de Usuario</p>
+    <span class="version-badge">Versión 1.0 — Octubre 2026</span>
+    <p class="cover-footer">Alma Juniors Rugby Club</p>
+  </section>
+
+  <!-- ==================== ÍNDICE ==================== -->
+  <nav class="toc">
+    <h2>Índice de Contenidos</h2>
+    <ol class="toc-list">
+      <li><a href="#cap1"><span class="toc-title">Registro de Usuario</span></a></li>
+      <li><a href="#cap2"><span class="toc-title">Inicio de Sesión</span></a></li>
+      <li><a href="#cap3"><span class="toc-title">Pantalla Principal</span></a></li>
+      <li><a href="#cap4"><span class="toc-title">Crear Nuevo Partido</span></a></li>
+      <li><a href="#cap5"><span class="toc-title">Partido en Vivo</span></a></li>
+      <li><a href="#cap6"><span class="toc-title">Finalizar Partido</span></a></li>
+      <li><a href="#cap7"><span class="toc-title">Reporte Final y Estadísticas</span></a></li>
+      <li><a href="#cap8"><span class="toc-title">Editar Partido Finalizado</span></a></li>
+      <li><a href="#cap9"><span class="toc-title">Eliminar Partido</span></a></li>
+      <li><a href="#cap10"><span class="toc-title">Filtrar Partidos</span></a></li>
+      <li><a href="#cap11"><span class="toc-title">Mi Perfil</span></a></li>
+      <li><a href="#cap12"><span class="toc-title">Cerrar Sesión</span></a></li>
+      <li><a href="#cap13"><span class="toc-title">Backup de Datos</span></a></li>
+    </ol>
+  </nav>
+
+  <!-- ==================== CONTENIDO ==================== -->
+  <main class="content">
+
+    <!-- ========== CAPÍTULO 1: REGISTRO ========== -->
+    <section class="chapter" id="cap1">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 01</span>
+        <h2 class="chapter-title">Registro de Usuario</h2>
+      </div>
+
+      <p>Para utilizar RugbyStats, primero deberás crear una cuenta de usuario. Este proceso te llevará menos de un minuto y solo necesitas hacerlo una vez.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Abrir la aplicación</strong>
+            <span>Al abrir RugbyStats por primera vez, verás la pantalla de Inicio de Sesión. Presiona el botón <strong>"Registrarse"</strong> ubicado en la parte inferior de la pantalla.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Completar el formulario</strong>
+            <span>Ingresá tu nombre completo, correo electrónico, número de teléfono y una contraseña segura. Todos los campos son obligatorios.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Confirmar el registro</strong>
+            <span>Presioná el botón <strong>"REGISTRAR"</strong>. Si todos los datos son correctos, el sistema te llevará automáticamente a la pantalla de Inicio de Sesión para que ingreses con tus credenciales recién creadas.</span>
+          </div>
+        </li>
+      </ol>
+
+      <!-- PLACEHOLDER: Acá van las capturas que me mandes -->
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Pantalla de Registro</strong>
+      </div>
+
+      <div class="tip info">
+        <span class="tip-icon">ℹ️</span>
+        <div class="tip-content">
+          <strong>Dato importante</strong>
+          El correo electrónico será tu identificador único dentro de la aplicación. No se pueden registrar dos cuentas con el mismo email.
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 2: LOGIN ========== -->
+    <section class="chapter" id="cap2">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 02</span>
+        <h2 class="chapter-title">Inicio de Sesión</h2>
+      </div>
+
+      <p>Una vez registrado, podrás ingresar a la aplicación utilizando tu correo electrónico y contraseña.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Ingresar credenciales</strong>
+            <span>Escribí tu correo electrónico en el primer campo y tu contraseña en el segundo. Podés tocar el ícono del ojo para ver la contraseña mientras la escribís.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Presionar "INGRESAR"</strong>
+            <span>Si las credenciales son correctas, serás redirigido a la Pantalla Principal de la aplicación.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Pantalla de Login</strong>
+      </div>
+
+      <div class="tip warning">
+        <span class="tip-icon">⚠️</span>
+        <div class="tip-content">
+          <strong>Contraseña incorrecta</strong>
+          Si ingresás una contraseña incorrecta, la app mostrará un mensaje de error en rojo en la parte inferior de la pantalla. Verificá tus datos e intentá nuevamente.
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 3: HOME ========== -->
+    <section class="chapter" id="cap3">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 03</span>
+        <h2 class="chapter-title">Pantalla Principal</h2>
+      </div>
+
+      <p>La Pantalla Principal es el centro de control de RugbyStats. Desde aquí podrás ver todos tus partidos registrados, crear nuevos partidos, acceder a partidos en vivo y gestionar tu perfil.</p>
+
+      <p>La interfaz se compone de tres elementos principales:</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Barra Superior (AppBar)</strong>
+            <span>Contiene el nombre de la aplicación, el nombre del club, el ícono de perfil de usuario y el botón de cerrar sesión.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Lista de Partidos</strong>
+            <span>Cada partido se muestra como una tarjeta con el marcador, los equipos, la fecha, el torneo y la división. Desde cada tarjeta podés acceder a las acciones del partido (editar, eliminar, ver reporte).</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Barra de Navegación Inferior</strong>
+            <span>Tiene tres secciones: <strong>"Partidos"</strong> (lista principal), <strong>"En Vivo"</strong> (acceso rápido al partido en curso) y el botón <strong>"+"</strong> para crear un nuevo partido.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Pantalla Principal con partidos</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 4: NUEVO PARTIDO ========== -->
+    <section class="chapter" id="cap4">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 04</span>
+        <h2 class="chapter-title">Crear Nuevo Partido</h2>
+      </div>
+
+      <p>Para iniciar un nuevo partido, presioná el botón <strong>"+"</strong> en la barra de navegación inferior de la Pantalla Principal.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Seleccionar condición de localía</strong>
+            <span>Elegí si tu equipo juega de <strong>Local</strong> o <strong>Visitante</strong> tocando el botón correspondiente.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Ingresar nombre del equipo rival</strong>
+            <span>Escribí el nombre del equipo contrario en el campo de texto.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Seleccionar el Torneo</strong>
+            <span>Elegí el torneo del menú desplegable. Si el torneo no está en la lista, seleccioná <strong>"Otro"</strong> y escribí el nombre del torneo nuevo en el campo que aparecerá.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Seleccionar la División</strong>
+            <span>Elegí entre Primera, Intermedia o Pre-Intermedia.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Seleccionar la Fecha</strong>
+            <span>Tocá el campo de fecha para abrir el calendario y elegir la fecha del partido.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Presionar "COMENZAR"</strong>
+            <span>El partido se creará y serás redirigido automáticamente a la pantalla de Partido en Vivo.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Modal de Nuevo Partido</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 5: PARTIDO EN VIVO ========== -->
+    <section class="chapter" id="cap5">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 05</span>
+        <h2 class="chapter-title">Partido en Vivo</h2>
+      </div>
+
+      <p>Esta es la pantalla principal de la aplicación durante un partido. Desde aquí podrás registrar todas las acciones del juego en tiempo real, controlar el cronómetro y ver el marcador actualizado al instante.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Marcador en vivo</strong>
+            <span>En la parte superior de la pantalla verás los nombres de ambos equipos con sus puntos actualizados en tiempo real.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Cronómetro</strong>
+            <span>El reloj comienza detenido. Presioná <strong>Play ▶</strong> para iniciarlo y <strong>Pausa ⏸</strong> para detenerlo. El tiempo corre automáticamente.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Registrar acciones del equipo Local</strong>
+            <span>En la sección izquierda encontrarás los botones de acciones: Try, Scrum, Line, Patada, Penales Cometidos, Tackle, Maul, Salida, Error No Forzado y Tarjeta. Al tocar un botón, si la acción tiene sub-opciones (por ejemplo, Patada tiene: Conversión, Penal a los palos, Errada), se mostrará un menú para seleccionar el resultado específico.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Registrar acciones del equipo Visitante</strong>
+            <span>En la sección derecha encontrarás los botones de acciones del rival: Try, Scrum, Line, Patada, Maul y Salida.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Deshacer última acción</strong>
+            <span>Si cometés un error al cargar una acción, presioná el botón <strong>"Deshacer"</strong> para eliminar la última acción registrada y revertir los puntos automáticamente.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Pantalla de Partido en Vivo</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 6: FINALIZAR ========== -->
+    <section class="chapter" id="cap6">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 06</span>
+        <h2 class="chapter-title">Finalizar Partido</h2>
+      </div>
+
+      <p>Cuando el partido haya terminado, presioná el botón <strong>"Finalizar Partido"</strong> en la pantalla de Partido en Vivo.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Confirmar la finalización</strong>
+            <span>Aparecerá un diálogo de confirmación preguntándote si estás seguro. Presioná <strong>"Finalizar"</strong> para confirmar.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Ver el Reporte Final</strong>
+            <span>Automáticamente serás redirigido a la pantalla de Reporte Final con todas las estadísticas del partido.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Diálogo de Finalizar Partido</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 7: REPORTE ========== -->
+    <section class="chapter" id="cap7">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 07</span>
+        <h2 class="chapter-title">Reporte Final y Estadísticas</h2>
+      </div>
+
+      <p>Al finalizar un partido (o al tocar un partido finalizado desde la lista), accederás al Reporte Final. Esta pantalla muestra un resumen completo de todas las estadísticas recopiladas durante el partido.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Marcador y resultado</strong>
+            <span>En la parte superior verás el resultado final (Victoria, Derrota o Empate) junto con el marcador.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Estadísticas detalladas</strong>
+            <span>Se desglosan todas las acciones registradas: tries, conversiones, penales, scrums ganados/perdidos, line-outs, tackles, mauls, errores no forzados y tarjetas.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Exportar a PDF</strong>
+            <span>Presioná el botón <strong>"Exportar PDF"</strong> para generar un documento profesional con todas las estadísticas, que podés compartir por WhatsApp, email o cualquier medio.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Reporte Final con Estadísticas</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 8: EDITAR PARTIDO ========== -->
+    <section class="chapter" id="cap8">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 08</span>
+        <h2 class="chapter-title">Editar Partido Finalizado</h2>
+      </div>
+
+      <p>Si necesitás corregir acciones de un partido ya finalizado, podés acceder al panel de edición histórica. Desde allí podrás eliminar acciones incorrectas y agregar nuevas acciones.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Acceder al editor</strong>
+            <span>Desde la Pantalla Principal, tocá el botón de <strong>editar</strong> (ícono de lápiz) en la tarjeta del partido finalizado.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Ver la línea de tiempo</strong>
+            <span>Verás el marcador actualizado arriba y abajo la lista cronológica de todas las acciones registradas en el partido.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Eliminar una acción</strong>
+            <span>Para borrar una acción incorrecta, presioná el ícono del <strong>bote de basura</strong> a la derecha de la acción. Los puntos del marcador se revertirán automáticamente.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Agregar una nueva acción</strong>
+            <span>Presioná el botón flotante <strong>"NUEVA ACCIÓN"</strong> en la parte inferior. Se abrirá un formulario donde podrás seleccionar el equipo, el tipo de acción, la sub-opción y el minuto.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Panel de Edición Histórica</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 9: ELIMINAR ========== -->
+    <section class="chapter" id="cap9">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 09</span>
+        <h2 class="chapter-title">Eliminar Partido</h2>
+      </div>
+
+      <p>Para eliminar un partido completo de la base de datos, presioná el ícono del <strong>bote de basura</strong> en la tarjeta del partido desde la Pantalla Principal.</p>
+
+      <div class="tip warning">
+        <span class="tip-icon">⚠️</span>
+        <div class="tip-content">
+          <strong>Partidos en curso</strong>
+          No es posible eliminar un partido que está actualmente "En Curso". Primero debés finalizarlo y luego podrás eliminarlo.
+        </div>
+      </div>
+
+      <div class="tip warning">
+        <span class="tip-icon">🗑️</span>
+        <div class="tip-content">
+          <strong>Acción irreversible</strong>
+          Al eliminar un partido, se borran permanentemente todas las acciones y estadísticas asociadas. Esta acción no se puede deshacer.
+        </div>
+      </div>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Diálogo de Eliminar Partido</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 10: FILTROS ========== -->
+    <section class="chapter" id="cap10">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 10</span>
+        <h2 class="chapter-title">Filtrar Partidos</h2>
+      </div>
+
+      <p>Cuando tengas muchos partidos cargados, podés usar los filtros para encontrar rápidamente lo que buscás.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Filtrar por División</strong>
+            <span>En la Pantalla Principal, tocá el filtro de División para ver únicamente los partidos de Primera, Intermedia o Pre-Intermedia.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Filtrar por Fecha</strong>
+            <span>Seleccioná un rango de fechas para ver solo los partidos jugados en ese período.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Panel de Filtros</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 11: PERFIL ========== -->
+    <section class="chapter" id="cap11">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 11</span>
+        <h2 class="chapter-title">Mi Perfil</h2>
+      </div>
+
+      <p>Desde la Pantalla Principal, tocá el ícono de persona en la esquina superior derecha para acceder a tu perfil.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Ver y editar datos personales</strong>
+            <span>Podés modificar tu nombre, correo electrónico y teléfono.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Cambiar contraseña</strong>
+            <span>Para cambiar tu contraseña, deberás ingresar tu contraseña actual, la nueva contraseña y confirmarla.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Guardar cambios</strong>
+            <span>Presioná <strong>"GUARDAR CAMBIOS"</strong> para aplicar las modificaciones a tu cuenta.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Pantalla de Perfil</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 12: LOGOUT ========== -->
+    <section class="chapter" id="cap12">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 12</span>
+        <h2 class="chapter-title">Cerrar Sesión</h2>
+      </div>
+
+      <p>Para cerrar tu sesión de forma segura, presioná el ícono de <strong>logout</strong> (flecha de salida) en la esquina superior derecha de la Pantalla Principal.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Confirmar cierre de sesión</strong>
+            <span>Aparecerá un diálogo de confirmación. Presioná <strong>"SALIR"</strong> para cerrar tu sesión de forma segura y volver a la pantalla de Login.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Diálogo de Cerrar Sesión</strong>
+      </div>
+    </section>
+
+    <!-- ========== CAPÍTULO 13: BACKUP ========== -->
+    <section class="chapter" id="cap13">
+      <div class="chapter-header">
+        <span class="chapter-number">Capítulo 13</span>
+        <h2 class="chapter-title">Backup de Datos</h2>
+      </div>
+
+      <p>RugbyStats te permite exportar e importar toda la base de datos de la aplicación en formato JSON, para proteger tu información o transferirla a otro dispositivo.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <strong>Exportar datos (Backup)</strong>
+            <span>Desde la Pantalla Principal, accedé al menú de opciones y seleccioná <strong>"Exportar Datos"</strong>. Se generará un archivo JSON que podrás compartir por WhatsApp, email o guardar en tu nube.</span>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <strong>Importar datos (Restaurar)</strong>
+            <span>Para restaurar un backup, seleccioná <strong>"Importar Datos"</strong> desde el menú de opciones. Elegí el archivo JSON previamente exportado y todos los datos se restaurarán automáticamente.</span>
+          </div>
+        </li>
+      </ol>
+
+      <div class="tip success">
+        <span class="tip-icon">💡</span>
+        <div class="tip-content">
+          <strong>Recomendación</strong>
+          Realizá un backup periódicamente (por ejemplo, después de cada fecha) para no perder información en caso de que cambies o pierdas tu dispositivo.
+        </div>
+      </div>
+
+      <div class="screenshot-placeholder">
+        <span class="ph-icon">📸</span>
+        Captura pendiente:<br><strong>Menú de Backup</strong>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="manual-footer">
+    <p><strong>RugbyStats</strong> — Manual de Usuario v1.0</p>
+    <p style="margin-top: 8px;">Alma Juniors Rugby Club · Octubre 2026</p>
+  </footer>
+
+</body>
+</html>
