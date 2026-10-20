@@ -12,7 +12,7 @@ CREATE TABLE Usuario (
 );
 CREATE TABLE PARTIDO (
 	Id_Partido INTEGER PRIMARY KEY AUTOINCREMENT,
-	Fecha TEXT,
+	Fecha DATETIME,
 	Equipo_Visitante TEXT,
 	Equipo_local TEXT,
 	Estado_partido TEXT,
@@ -20,7 +20,7 @@ CREATE TABLE PARTIDO (
 	Puntos_local INTEGER DEFAULT 0,
     Puntos_visitante INTEGER DEFAULT 0,
 	Division TEXT,
-	Id_Usuario INTEGER REFERENCES Usuario(IdUsuario) ON DELETE SET NULL
+	Id_Usuario INTEGER REFERENCES Usuario(IdUsuario) ON DELETE CASCADE
 );
 CREATE TABLE Accion (
 	IdAccion INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,7 +34,7 @@ CREATE TABLE Accion (
 CREATE TABLE REPORTE (
 	ID_Reporte INTEGER PRIMARY KEY AUTOINCREMENT,
 	Contenido_Reporte TEXT,
-	Fecha_Generacion TEXT,
+	Fecha_Generacion DATETIME,
 	Nombre TEXT,
 	Tipo_Reporte TEXT,
 	Id_Partido INTEGER REFERENCES PARTIDO(Id_Partido) ON DELETE CASCADE
