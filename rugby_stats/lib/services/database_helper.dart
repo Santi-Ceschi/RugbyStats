@@ -29,7 +29,7 @@ class DatabaseHelper {
     );
     CREATE TABLE PARTIDO (
       Id_Partido INTEGER PRIMARY KEY AUTOINCREMENT,
-      Fecha TEXT,
+      Fecha DATE NOT NULL,
       Equipo_Visitante TEXT,
       Equipo_local TEXT,
       Estado_partido TEXT,
@@ -40,7 +40,7 @@ class DatabaseHelper {
       Hora_Inicio TEXT,
       Minutos_Ajuste INTEGER DEFAULT 0,
       Somos_Local INTEGER DEFAULT 1,
-      Id_Usuario INTEGER REFERENCES Usuario(IdUsuario) ON DELETE SET NULL
+      Id_Usuario INTEGER NOT NULL REFERENCES Usuario(IdUsuario) ON DELETE RESTRICT
     );
     CREATE TABLE Accion (
       IdAccion INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,7 +54,7 @@ class DatabaseHelper {
     CREATE TABLE REPORTE (
       ID_Reporte INTEGER PRIMARY KEY AUTOINCREMENT,
       Contenido_Reporte TEXT,
-      Fecha_Generacion TEXT,
+      Fecha_Generacion DATETIME NOT NULL,
       Nombre TEXT,
       Tipo_Reporte TEXT,
       Id_Partido INTEGER REFERENCES PARTIDO(Id_Partido) ON DELETE CASCADE
@@ -78,7 +78,10 @@ class DatabaseHelper {
     
     final db = await openDatabase(
       path,
-      version: 3,
+      version: 4,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON;');
+      },
       onCreate: (db, version) async {
         List<String> queries = _createDbQuery.split(';');
         for (String query in queries) {
@@ -95,10 +98,109 @@ class DatabaseHelper {
         if (oldVersion < 3) {
           await db.execute('ALTER TABLE PARTIDO ADD COLUMN Somos_Local INTEGER DEFAULT 1;');
         }
+        if (oldVersion < 4) {
+          await _migrarEsquemaV4(db);
+        }
       },
     );
     await _precargarTiposDeAccion(db);
     return db;
+  }
+
+  static Future<void> _migrarEsquemaV4(Database db) async {
+    // 1. Obtener o crear un usuario fallback si existiesen partidos huérfanos sin Id_Usuario
+    final usuarios = await db.query('Usuario', limit: 1);
+    int fallbackUserId;
+    if (usuarios.isNotEmpty) {
+      fallbackUserId = usuarios.first['IdUsuario'] as int;
+    } else {
+      fallbackUserId = await db.insert('Usuario', {
+        'Nombre_Usuario': 'Usuario Principal',
+        'Contrasena': 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3',
+        'Email': 'admin@almajuniors.com',
+        'Telefono': ''
+      });
+    }
+
+    // 2. Recrear tabla PARTIDO con nueva restricción NOT NULL y ON DELETE RESTRICT
+    await db.execute('PRAGMA foreign_keys = OFF;');
+
+    await db.execute('''
+      CREATE TABLE PARTIDO_v4 (
+        Id_Partido INTEGER PRIMARY KEY AUTOINCREMENT,
+        Fecha DATE NOT NULL,
+        Equipo_Visitante TEXT,
+        Equipo_local TEXT,
+        Estado_partido TEXT,
+        Torneo TEXT,
+        Puntos_local INTEGER DEFAULT 0,
+        Puntos_visitante INTEGER DEFAULT 0,
+        Division TEXT,
+        Hora_Inicio TEXT,
+        Minutos_Ajuste INTEGER DEFAULT 0,
+        Somos_Local INTEGER DEFAULT 1,
+        Id_Usuario INTEGER NOT NULL REFERENCES Usuario(IdUsuario) ON DELETE RESTRICT
+      );
+    ''');
+
+    await db.execute('''
+      INSERT INTO PARTIDO_v4 (
+        Id_Partido, Fecha, Equipo_Visitante, Equipo_local, Estado_partido,
+        Torneo, Puntos_local, Puntos_visitante, Division, Hora_Inicio,
+        Minutos_Ajuste, Somos_Local, Id_Usuario
+      )
+      SELECT 
+        Id_Partido,
+        COALESCE(Fecha, date('now')),
+        Equipo_Visitante,
+        Equipo_local,
+        Estado_partido,
+        Torneo,
+        Puntos_local,
+        Puntos_visitante,
+        Division,
+        Hora_Inicio,
+        Minutos_Ajuste,
+        COALESCE(Somos_Local, 1),
+        COALESCE(Id_Usuario, $fallbackUserId)
+      FROM PARTIDO;
+    ''');
+
+    await db.execute('DROP TABLE PARTIDO;');
+    await db.execute('ALTER TABLE PARTIDO_v4 RENAME TO PARTIDO;');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_partido_usuario ON PARTIDO(Id_Usuario);');
+
+    // 3. Recrear tabla REPORTE con Fecha_Generacion DATETIME NOT NULL
+    await db.execute('''
+      CREATE TABLE REPORTE_v4 (
+        ID_Reporte INTEGER PRIMARY KEY AUTOINCREMENT,
+        Contenido_Reporte TEXT,
+        Fecha_Generacion DATETIME NOT NULL,
+        Nombre TEXT,
+        Tipo_Reporte TEXT,
+        Id_Partido INTEGER REFERENCES PARTIDO(Id_Partido) ON DELETE CASCADE
+      );
+    ''');
+
+    await db.execute('''
+      INSERT INTO REPORTE_v4 (
+        ID_Reporte, Contenido_Reporte, Fecha_Generacion, Nombre, Tipo_Reporte, Id_Partido
+      )
+      SELECT 
+        ID_Reporte,
+        Contenido_Reporte,
+        COALESCE(Fecha_Generacion, datetime('now')),
+        Nombre,
+        Tipo_Reporte,
+        Id_Partido
+      FROM REPORTE;
+    ''');
+
+    await db.execute('DROP TABLE REPORTE;');
+    await db.execute('ALTER TABLE REPORTE_v4 RENAME TO REPORTE;');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_reporte_partido ON REPORTE(Id_Partido);');
+
+    await db.execute('PRAGMA foreign_keys = ON;');
   }
 
   Future<void> _precargarTiposDeAccion(Database db) async {
@@ -277,7 +379,7 @@ class DatabaseHelper {
       await txn.insert('Accion', accionMap);
 
       if (puntosSumar > 0) {
-        String equipoAccionNorm = nuevaAccion.equipoAccion?.trim().toLowerCase() ?? '';
+        String equipoAccionNorm = nuevaAccion.equipoAccion.trim().toLowerCase();
         String equipoLocalNorm = (partido['Equipo_local'] as String?)?.trim().toLowerCase() ?? '';
         String equipoVisitaNorm = (partido['Equipo_Visitante'] as String?)?.trim().toLowerCase() ?? '';
 
